@@ -8,6 +8,9 @@ using namespace std;
 template <class T>
 class AVL
 {
+private:
+
+	//===================================== AVL Node ==========================================
 	struct Node
 	{
 		T data;
@@ -20,9 +23,12 @@ class AVL
 		Node(T data): data(data), height(0),hash(""), left(""), right(""), parent("")
 		{}
 
-		void updateFile(const string& fileName)
+		void updateFile(const string& path)
 		{
-			ofstream file(fileName);
+			if (path.empty())
+				throw runtime_error("Attempting to access empty path.");
+
+			ofstream file(path);
 			if (!file.is_open())
 				throw runtime_error("Cannot open file: \'" + fileName + "\' for writing.");
 
@@ -36,11 +42,14 @@ class AVL
 			file.close();
 		}
 
-		static Node readFile(const string& fileName)
+		static Node readFile(const string& path)
 		{
-			ifstream file(fileName);
+			if(path.empty())
+				throw runtime_error("Attempting to access empty path.");
+			
+			ifstream file(path);
 			if (!file.is_open())
-				throw runtime_error("Cannot open file: \'" + fileName + "\' for reading.");
+				throw runtime_error("Cannot open file: \'" + path + "\' for reading.");
 
 			Node node;
 			file >> node.data;
@@ -54,4 +63,90 @@ class AVL
 			return node;
 		}
 	};
+
+// ===================================== AVL functions ==========================================
+	string rootPath;
+
+	//get height of node
+	int Height(const string& path)
+	{
+		if (path.empty())
+			return -1;
+		else
+		{
+			return Node::readFile(path).height;
+		}
+	}
+
+	//NOTE: updates height in file 
+	void updateNodeHeight(const string& path)
+	{
+		Node node = Node::readFile(path);
+
+		int leftHeight = Height(node.left);
+		int rightHeight = Height(node.right);
+
+		node.height = max(leftHeight, rightHeight) + 1;
+		node.updateFile(path);
+		return;
+	}
+
+	//BF = Right - Left
+	int balanceFactor(const string& path)
+	{
+		Node node = Node::readFile(path);
+
+		int leftHeight = Height(node.left);
+		int rightHeight = Height(node.right);
+
+		return rightHeight - leftHeight;
+	}
+
+	//========= rotations ===========
+	void rotateRight(const string& path)
+	{
+		Node mainNode = Node::readFile(path);
+		Node leftNode = Node::readFile(mainNode.left);
+		string leftNodePath = mainNode.left;
+		string leftNodeKaRightPath = leftNode.right;
+
+		mainNode.left = leftNodeKaRightPath;
+		if (!leftNodeKaRightPath.empty())
+		{
+			Node leftNodesRight_NODE = Node::readFile(leftNodeKaRightPath);
+			leftNodesRight_NODE.parent = path;
+			leftNodesRight_NODE.updateFile(leftNodeKaRightPath);
+		}
+
+		leftNode.parent = mainNode.parent;
+		leftNode.right = path;
+		mainNode.parent = leftNodePath;	
+	}
+
+	void rotateLeft(const string& path)
+	{
+		Node mainNode = Node::readFile(path);
+		Node rightNode = Node::readFile(mainNode.right);
+		string rightNodePath = mainNode.right;
+		string rightNodeKaLeftPath = rightNode.left;
+
+		mainNode.right = rightNodeKaLeftPath;
+		if (!rightNodeKaLeftPath.empty())
+		{
+			Node rightNodesleft_NODE = Node::readFile(rightNodeKaLeftPath);
+			rightNodesleft_NODE.parent = path;
+			rightNodesleft_NODE.updateFile(rightNodeKaLeftPath);
+		}
+
+		rightNode.parent = mainNode.parent;
+		rightNode.left = path;
+		mainNode.parent = rightNodePath;
+	}
+
+
+public:
+	AVL(): rootPath("")
+	{}
+
+
 };
