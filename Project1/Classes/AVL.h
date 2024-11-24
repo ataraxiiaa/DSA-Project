@@ -78,24 +78,19 @@ private:
 		}
 	}
 
-	//NOTE: updates height in file 
-	void updateNodeHeight(const string& path)
+	//NOTE: does not update height in file 
+	void updateNodeHeight(Node& node)
 	{
-		Node node = Node::readFile(path);
-
 		int leftHeight = Height(node.left);
 		int rightHeight = Height(node.right);
 
 		node.height = max(leftHeight, rightHeight) + 1;
-		node.updateFile(path);
 		return;
 	}
 
 	//BF = Right - Left
-	int balanceFactor(const string& path)
+	int balanceFactor(const Node& node)
 	{
-		Node node = Node::readFile(path);
-
 		int leftHeight = Height(node.left);
 		int rightHeight = Height(node.right);
 
@@ -103,13 +98,16 @@ private:
 	}
 
 	//========= rotations ===========
-	void rotateRight(const string& path)
+
+	//returns path of the node that replaces the main node
+	string rotateRight(const string& path)
 	{
 		Node mainNode = Node::readFile(path);
 		Node leftNode = Node::readFile(mainNode.left);
 		string leftNodePath = mainNode.left;
 		string leftNodeKaRightPath = leftNode.right;
 
+		//perform rotation
 		mainNode.left = leftNodeKaRightPath;
 		if (!leftNodeKaRightPath.empty())
 		{
@@ -117,19 +115,32 @@ private:
 			leftNodesRight_NODE.parent = path;
 			leftNodesRight_NODE.updateFile(leftNodeKaRightPath);
 		}
-
 		leftNode.parent = mainNode.parent;
 		leftNode.right = path;
-		mainNode.parent = leftNodePath;	
+		mainNode.parent = leftNodePath;
+
+		//update heights
+		updateNodeHeight(mainNode);
+		updateNodeHeight(leftNode);
+
+		//update files
+		mainNode.updateFile(path);
+		leftNode.updateFile(leftNodePath);
+
+		//return path of new parent
+		return leftNodePath;
+
 	}
 
-	void rotateLeft(const string& path)
+	//returns path of the node that replaces the main node
+	string rotateLeft(const string& path)
 	{
 		Node mainNode = Node::readFile(path);
 		Node rightNode = Node::readFile(mainNode.right);
 		string rightNodePath = mainNode.right;
 		string rightNodeKaLeftPath = rightNode.left;
 
+		//perform rotation
 		mainNode.right = rightNodeKaLeftPath;
 		if (!rightNodeKaLeftPath.empty())
 		{
@@ -137,12 +148,23 @@ private:
 			rightNodesleft_NODE.parent = path;
 			rightNodesleft_NODE.updateFile(rightNodeKaLeftPath);
 		}
-
 		rightNode.parent = mainNode.parent;
 		rightNode.left = path;
 		mainNode.parent = rightNodePath;
+
+		//update heights
+		updateNodeHeight(mainNode);
+		updateNodeHeight(rightNode);
+
+		//update files
+		mainNode.updateFile(path);
+		leftNode.updateFile(rightNodePath);
+
+		//return path of new parent
+		return rightNodePath;
 	}
 
+	
 
 public:
 	AVL(): rootPath("")
