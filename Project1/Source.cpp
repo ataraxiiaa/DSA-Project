@@ -8,6 +8,11 @@ int main() {
 	rbt.insert(20);
 	rbt.insert(30);
 	rbt.insert(15);
+	rbt.insert(5);
+	rbt.insert(36);
+	rbt.insert(25);
+	rbt.insert(26);
+	rbt.insert(2);
 
 	rbt.preOrder();
 

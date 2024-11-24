@@ -76,7 +76,13 @@ class RedBlackTree {
 		RedBlackNode<T>* parent = node->parent;
 		if (parent->color == "RED") {
 			RedBlackNode<T>* grand = node->parent->parent;
-			RedBlackNode<T>* uncle = parent->data < grand->data ? grand->right : grand->left;
+			RedBlackNode<T>* uncle = nullptr;
+			if (parent->data < grand->data) { // parent left so uncle right
+				uncle = grand->right;
+			}
+			else {
+				uncle = grand->left;
+			}
 
 			if (uncle && uncle->color == "RED") {
 				uncle->color = "BLACK";
@@ -85,10 +91,8 @@ class RedBlackTree {
 				if (grand != root) {
 					grand->color = "RED";
 				}
-				if (grand == root || grand->parent->color == "RED")
-					fixOrientation(grand);
 			}
-			else if (!uncle || uncle->color == "BLACK") {
+			else {
 				int data = node->data;
 				if (data < parent->data && parent->data < grand->data) { // LL
 					grand->color = "RED";
@@ -121,26 +125,32 @@ class RedBlackTree {
 			fixOrientation(root);
 			return;
 		}
-		else if (data < root->data) {
-			if (!root->left) {
-				root->left = new RedBlackNode<T>(data);
-				root->left->parent = root;
-				fixOrientation(root->left);
+		else {
+			if (data == root->data) {
+				// handling same case
 				return;
 			}
-			else {
-				insertNode(root->left, data);
+			else if (data < root->data) {
+				if (!root->left) {
+					root->left = new RedBlackNode<T>(data);
+					root->left->parent = root;
+					fixOrientation(root->left);
+					return;
+				}
+				else {
+					insertNode(root->left, data);
+				}
 			}
-		}
-		else if (data > root->data) {
-			if (!root->right) {
-				root->right = new RedBlackNode<T>(data);
-				root->right->parent = root;
-				fixOrientation(root->right);
-				return;
-			}
-			else {
-				insertNode(root->right, data);
+			else if (data > root->data) {
+				if (!root->right) {
+					root->right = new RedBlackNode<T>(data);
+					root->right->parent = root;
+					fixOrientation(root->right);
+					return;
+				}
+				else {
+					insertNode(root->right, data);
+				}
 			}
 		}
 	}
