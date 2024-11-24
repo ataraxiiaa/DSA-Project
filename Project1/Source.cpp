@@ -4,29 +4,28 @@ using namespace std;
 
 int main()
 {
-	AVL<int> tree;
-	tree.insert(1);
-	tree.insert(2);
-	tree.insert(3);
-	tree.insert(4);
-	tree.insert(5);
-	tree.insert(6);
-	tree.insert(7);
-	tree.insert(7);
-	tree.insert(4);
+	AVL<string> tree("C:\\Users\\HP\\source\\repos\\ataraxiiaa\\DSA-Project\\Project1\\AVLTree1_NODES");
+	tree.insert("Fahad BIN FAISAL");
+	tree.insert("Ali nigger");
+	tree.insert("Ahmar");
+	tree.insert("ALIBROTHER HEHE");
+	tree.insert("goat");
+	tree.insert("A VERY LONG MEESSAGE I CAN FINALLY READ SPACES HAHA");
 	tree.saveRootToFile();
+	tree.print();
+	cout << endl<<endl;
 
+	AVL<int> tree2("C:\\Users\\HP\\source\\repos\\ataraxiiaa\\DSA-Project\\Project1\\AVLTree2_NODES");
+	tree2.insert(5);
+	tree2.insert(7);
+	tree2.insert(2);
+	tree2.insert(4);
+	tree2.insert(1);
+	tree2.insert(9);
+	tree2.insert(5);
+	tree2.saveRootToFile();
+	tree2.print();
 
-	ifstream root("AVL_Root.txt");
-	if (root.is_open())
-	{
-		string rootPath;
-		root >> rootPath;
-		root.close();
-
-		AVL<int> tree2(rootPath);
-		tree2.print();
-	}
 
 	return 0;
 }

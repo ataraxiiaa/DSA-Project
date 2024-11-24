@@ -3,6 +3,7 @@
 #include <string>
 #include <fstream>
 #include <stdexcept>
+#include <sstream>
 using namespace std;
 
 //NOTE: try to keep file accessing at a minimum as that will slow the algorithm down.
@@ -35,7 +36,7 @@ private:
 			ofstream file;
 			file.open(path);
 			if (!file.is_open())
-				throw runtime_error("Cannot open file: \'" + path + "\' for writing.");
+				throw runtime_error("Cannot open file for writing.");
 
 			file << this->data << '\n';
 			file << this->height << '\n';
@@ -56,18 +57,31 @@ private:
 			ifstream file;
 			file.open(path);
 			if (!file.is_open())
-				throw runtime_error("Cannot open file: \'" + path + "\' for reading.");
+				throw runtime_error("Cannot open file for reading.");
 
 			Node node;
-
-			file >> node.data;
-			file >> node.height;
-			file >> node.frequency;
-			file >> node.hash;
-			file >> node.left;
-			file >> node.right;
-			file >> node.parent;
-
+			if constexpr (std::is_same<T, std::string>::value) 
+			{
+				getline(file, node.data);
+				file >>node.height;
+				file.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+				file >>node.frequency;
+				file.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+			}
+			else 
+			{
+				file >> node.data;
+				file.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+				file >> node.height;
+				file.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+				file >> node.frequency;
+				file.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+			}
+			getline(file, node.hash);
+			getline(file, node.left);
+			getline(file, node.right);
+			getline(file, node.parent);
+			
 			file.close();
 			return node;
 		}
@@ -75,11 +89,18 @@ private:
 
 // ===================================== AVL functions ==========================================
 	string rootPath;
+	string folderPath;
 
 	//generate a filePath based on the value of a node
 	string generateFilePath(T value)
 	{
-		string path = to_string(value) + ".txt";
+		string path=folderPath;
+		std::ostringstream oss;
+		oss << value; 
+		string name= oss.str();
+		path += "\\";
+		path += name;
+		path += ".txt";
 		return path;
 	}
 
@@ -300,7 +321,7 @@ private:
 
 
 public:
-	AVL(string rootPath="NULL") : rootPath(rootPath)
+	AVL(string folderPath, string rootPath="NULL") : folderPath(folderPath), rootPath(rootPath)
 	{}
 
 	void insert(T data)
@@ -317,7 +338,9 @@ public:
 	void saveRootToFile()
 	{
 		ofstream file;
-		file.open("AVL_Root.txt");
+		string path = folderPath;
+		path += "\\AVL_ROOT.txt";
+		file.open(path);
 		if (!file.is_open())
 			throw runtime_error("Cannot open file: \'AVL_Root.txt\' for writing.");
 		file << rootPath << endl;
