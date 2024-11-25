@@ -8,28 +8,31 @@ enum NodeColor {
 	RED,
 	BLACK
 };
-template<class T>
-struct RedBlackNode {
-	T data;
-	RedBlackNode* left, * right, * parent;
-	NodeColor color;
-	bool debt;
-	RedBlackNode(T data, RedBlackNode* left = nullptr, RedBlackNode* right = nullptr, RedBlackNode* parent = nullptr) {
-		this->left = left;
-		this->right = right;
-		this->parent = parent;
-		this->data = data;
-		color = RED;
-		debt = false;
-	}
-};
+
 
 template<class T>
 class RedBlackTree {
-	RedBlackNode<T>* root;
-
-	void rotateRight(RedBlackNode<T>*& node) {
-		RedBlackNode<T>* temp = node->left;
+	//===================================== RedBlackNode Node ==========================================
+	struct RedBlackNode {
+		T data;
+		RedBlackNode* left, * right, * parent;
+		NodeColor color;
+		bool debt;
+		int frequency;
+		RedBlackNode(T data, RedBlackNode* left = nullptr, RedBlackNode* right = nullptr, RedBlackNode* parent = nullptr) {
+			this->left = left;
+			this->right = right;
+			this->parent = parent;
+			this->data = data;
+			color = RED;
+			debt = false;
+			frequency = 1;
+		}
+	};
+	RedBlackNode* root;
+	//===================================== RedBlackNode Functions ==========================================
+	void rotateRight(RedBlackNode*& node) {
+		RedBlackNode* temp = node->left;
 		node->left = temp->right;
 		if (temp->right) temp->right->parent = node;
 		temp->right = node;
@@ -45,13 +48,13 @@ class RedBlackTree {
 		else {
 			root = temp;
 		}
-		RedBlackNode<T>* temp2 = node->parent;
+		RedBlackNode* temp2 = node->parent;
 		node->parent = temp;
 		temp->parent = temp2;
 		node = temp;
 	}
-	void rotateLeft(RedBlackNode<T>*& node) {
-		RedBlackNode<T>* temp = node->right;
+	void rotateLeft(RedBlackNode*& node) {
+		RedBlackNode* temp = node->right;
 		node->right = temp->left;
 		if (temp->left) temp->left->parent = node;
 		temp->left = node;
@@ -66,23 +69,23 @@ class RedBlackTree {
 		else {
 			root = temp;
 		}
-		RedBlackNode<T>* temp2 = node->parent;
+		RedBlackNode* temp2 = node->parent;
 		node->parent = temp;
 		temp->parent = temp2;
 		node = temp;
 	}
 
-	void fixOrientation_Insertion(RedBlackNode<T>*& node) {
+	void fixOrientation_Insertion(RedBlackNode*& node) {
 		if (!node) return;
 		if (node == root) {
 			node->color = BLACK;
 			return;
 		}
 		node->color = RED;
-		RedBlackNode<T>* parent = node->parent;
+		RedBlackNode* parent = node->parent;
 		if (parent->color == RED) {
-			RedBlackNode<T>* grand = node->parent->parent;
-			RedBlackNode<T>* uncle = nullptr;
+			RedBlackNode* grand = node->parent->parent;
+			RedBlackNode* uncle = nullptr;
 			if (parent->data < grand->data) { // parent left so uncle right
 				uncle = grand->right;
 			}
@@ -125,9 +128,9 @@ class RedBlackTree {
 			}
 		}
 	}
-	void insertNode(RedBlackNode<T>*& root, T data) {
+	void insertNode(RedBlackNode*& root, T data) {
 		if (!root) {
-			root = new RedBlackNode<T>(data);
+			root = new RedBlackNode(data);
 			fixOrientation_Insertion(root);
 			return;
 		}
@@ -138,7 +141,7 @@ class RedBlackTree {
 			}
 			else if (data < root->data) {
 				if (!root->left) {
-					root->left = new RedBlackNode<T>(data);
+					root->left = new RedBlackNode(data);
 					root->left->parent = root;
 					fixOrientation_Insertion(root->left);
 					return;
@@ -149,7 +152,7 @@ class RedBlackTree {
 			}
 			else if (data > root->data) {
 				if (!root->right) {
-					root->right = new RedBlackNode<T>(data);
+					root->right = new RedBlackNode(data);
 					root->right->parent = root;
 					fixOrientation_Insertion(root->right);
 					return;
@@ -160,14 +163,14 @@ class RedBlackTree {
 			}
 		}
 	}
-	void fixDebt(RedBlackNode<T>*& node) {
+	void fixDebt(RedBlackNode*& node) {
 		if (node->color == RED) {
 			node->color = BLACK;
 		}
 		else if (node != root) {
 			// handling debt cases
-			RedBlackNode<T>* parent = node->parent;
-			RedBlackNode<T>* sibling;
+			RedBlackNode* parent = node->parent;
+			RedBlackNode* sibling;
 			if (parent->left == node) {
 				sibling = parent->right;
 			}
@@ -242,7 +245,7 @@ class RedBlackTree {
 			node = nullptr;
 		}
 	}
-	void fixOrientation_Deletion(RedBlackNode<T>*& node, bool debt) {
+	void fixOrientation_Deletion(RedBlackNode*& node, bool debt) {
 		if (node->color == RED) {
 			node->color = BLACK;
 			return;
@@ -252,7 +255,7 @@ class RedBlackTree {
 			fixDebt(node);
 		}
 	}
-	void removeNode(RedBlackNode<T>*& root, T value) {
+	void removeNode(RedBlackNode*& root, T value) {
 		if (!root) {
 			cout << "Unable to find value..\n";
 			return;
@@ -336,7 +339,7 @@ public:
 		}
 		removeNode(root, value);
 	}
-	RedBlackNode<T>* Search(RedBlackNode<T>* root,T value) {
+	RedBlackNode* Search(RedBlackNode* root,T value) {
 		if (!root) {
 			cout << "Unable to find value..\n";
 			return nullptr;
@@ -351,7 +354,7 @@ public:
 			return root;
 		}
 	}
-	void helper(RedBlackNode<T>* root) {
+	void helper(RedBlackNode* root) {
 		if (root) {
 			cout << root->data << " " << "(";
 			if (root->color) cout << "BLACK";
@@ -361,7 +364,7 @@ public:
 			helper(root->right);
 		}
 	}
-	RedBlackNode<T>* Root()const { return root; }
+	RedBlackNode* Root()const { return root; }
 	void preOrder() {
 		helper(root);
 	}
