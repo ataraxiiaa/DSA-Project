@@ -160,11 +160,11 @@ class RedBlackTree {
 			}
 		}
 	}
-	void fixDebt(RedBlackNode<T>*& node, bool hasDebt) {
+	void fixDebt(RedBlackNode<T>*& node) {
 		if (node->color == RED) {
 			node->color = BLACK;
 		}
-		else if (node != root && hasDebt) {
+		else if (node != root) {
 			// handling debt cases
 			RedBlackNode<T>* parent = node->parent;
 			RedBlackNode<T>* sibling;
@@ -191,15 +191,65 @@ class RedBlackTree {
 				fixDebt(node);
 			}
 
-			else if (!sibling || sibling->color == BLACK) {
+			else if (sibling->color == BLACK) {
 				if ((sibling->left && sibling->left->color == RED) ||
 					(sibling->right && sibling->right->color == RED)) {
 
+					if (sibling->data < parent->data && (sibling->left && sibling->left->color == RED)) { // LL
+						sibling->left->color == BLACK;
+						sibling->color = parent->color;
+						parent->color = BLACK;
+						rotateRight(parent);
+					}
+					else if (sibling->data > parent->data && (sibling->right && sibling->right->color == RED)) { // RR
+						sibling->right->color == BLACK;
+						sibling->color = parent->color;
+						parent->color = BLACK;
+						rotateLeft(parent);
+					}
+					else if (sibling->data < parent->data && (sibling->left && sibling->left->color == BLACK)) { // LR
+						sibling->right->color == BLACK;
+						sibling->color = parent->color;
+						parent->color = BLACK;
+						rotateLeft(sibling);
+						rotateRight(parent);
+					}
+					else if (sibling->data > parent->data && (sibling->right && sibling->right->color == BLACK)) { // LR
+						sibling->right->color == BLACK;
+						sibling->color = parent->color;
+						parent->color = BLACK;
+						rotateRight(sibling);
+						rotateLeft(parent);
+					}
 				}
 				else {
-
+					sibling->color = RED;
+					if (parent->color == RED) parent->color = BLACK;
+					else if (parent->color == BLACK && parent != root) fixDebt(parent);
 				}
 			}
+		}
+		if (node == this->root) {
+			node->color = BLACK;
+			return;
+		}
+		if (node && node->debt) {
+			if (node->parent->left == node)
+				node->parent->left = nullptr;
+			else
+				node->parent->right = nullptr;
+			delete node;
+			node = nullptr;
+		}
+	}
+	void fixOrientation_Deletion(RedBlackNode<T>*& node, bool debt) {
+		if (node->color == RED) {
+			node->color = BLACK;
+			return;
+		}
+		else if(node != root && debt)
+		{
+			fixDebt(node);
 		}
 	}
 	void removeNode(RedBlackNode<T>*& root, T value) {
@@ -229,7 +279,8 @@ class RedBlackTree {
 						root = nullptr;
 						return;
 					}
-					else {
+					else if(root->color == RED)
+					{
 						if (root) {
 							if (root->parent->right == root) {
 								root->parent->right = nullptr;
@@ -248,26 +299,26 @@ class RedBlackTree {
 					RedBlackNode<T>* temp = root;
 					root = root->right;
 					root->parent = temp->parent;
-					root->parent->left = root;
+					root->parent->right = root;
 					delete temp;
 				}
 				else if (!root->right) { // left child
 					RedBlackNode<T>* temp = root;
 					root = root->left;
 					root->parent = temp->parent;
-					root->parent->right = root;
+					root->parent->left = root;
 					delete temp;
 				}
-				fixDebt(root, root->debt);
+				fixOrientation_Deletion(root, root->debt);
 			}
 			// 2 Children
-			if (root->left && root->right) {
-				RedBlackNode<T>*& successor = root->right;
-				while (successor && successor->left) successor = successor->left;
+			else if (root->left && root->right) {
+				RedBlackNode<T>*& successor = root->left;
+				while (successor && successor->right) successor = successor->right;
 				T temp = successor->data;
 				successor->data = root->data;
 				root->data = temp;
-				removeNode(root->right, successor->data);
+				removeNode(successor, successor->data);
 			}
 		}
 	}
@@ -284,7 +335,21 @@ public:
 			return;
 		}
 		removeNode(root, value);
-
+	}
+	RedBlackNode<T>* Search(RedBlackNode<T>* root,T value) {
+		if (!root) {
+			cout << "Unable to find value..\n";
+			return nullptr;
+		}
+		if (value < root->data) {
+			Search(root->left, value);
+		}
+		else if (value > root->data) {
+			Search(root->right, value);
+		}
+		else {
+			return root;
+		}
 	}
 	void helper(RedBlackNode<T>* root) {
 		if (root) {
@@ -296,6 +361,7 @@ public:
 			helper(root->right);
 		}
 	}
+	RedBlackNode<T>* Root()const { return root; }
 	void preOrder() {
 		helper(root);
 	}
