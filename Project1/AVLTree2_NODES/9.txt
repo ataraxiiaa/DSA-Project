@@ -1,0 +1,7 @@
+9
+0
+1
+HASH
+NULL
+NULL
+C:\Users\HP\source\repos\ataraxiiaa\DSA-Project\Project1\AVLTree2_NODES\7.txt
