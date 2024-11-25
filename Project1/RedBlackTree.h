@@ -110,7 +110,7 @@ class RedBlackTree {
 				else if (data < parent->data && parent->data > grand->data) { // RL
 					rotateRight(grand);
 					grand->color = RED;
-					parent->color = BLACK;;
+					parent->color = BLACK;
 					rotateLeft(grand);
 				}
 				else if (data > parent->data && parent->data < grand->data) { // LR
@@ -157,12 +157,62 @@ class RedBlackTree {
 			}
 		}
 	}
+	void removeNode(RedBlackNode<T>*& root, T value) {
+		if (!root) {
+			cout << "Unable to find value..\n";
+			return;
+		}
+		if (data < root->data) {
+			removeNode(root->left, value);
+		}
+		else if (data > root->data) {
+			removeNode(root->right, value);
+		}
+		else {
+			// found Node
+			// 1 child
+			if (!root->left) {
+				RedBlackNode<T>* temp = root;
+				root = root->left;
+				root->parent = temp->parent;
+				root->parent->left = root;
+				delete temp;
+				return;
+
+			}
+			else if (!root->right) {
+				RedBlackNode<T>* temp = root;
+				root = root->right;
+				root->parent = temp->parent;
+				root->parent->right = root;
+				delete temp;
+				return;
+			}
+			// 2 Children
+			else if (root->left && root->right) {
+				RedBlackNode<T>*& successor = root->right;
+				while (successor && successor->left) successor = successor->left;
+				T temp = successor->data;
+				successor->data = root->data;
+				root->data = temp;
+				removeNode(root->right, temp);	
+			}
+		}
+	}
 
 public:
 	RedBlackTree():root(nullptr) {}
 
 	void insert(T value) {
 		insertNode(root, value);
+	}
+	void remove(T value) {
+		if (!root) {
+			cout << "Tree is empty\n";
+			return;
+		}
+		removeNode(root,value);
+
 	}
 	void helper(RedBlackNode<T>* root) {
 		if (root) {
