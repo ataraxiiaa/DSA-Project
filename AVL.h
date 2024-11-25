@@ -2,15 +2,12 @@
 #include<iostream>
 #include <string>
 #include <fstream>
-#include <stdexcept>
-#include <sstream>
-#include <limits>
+#include<filesystem>
 using namespace std;
 
 //NOTE: try to keep file accessing at a minimum as that will slow the algorithm down.
 //if possible, open a required file not more than once
 
-using std::numeric_limits;
 template <class T>
 class AVL
 {
@@ -23,16 +20,16 @@ private:
 		int height;
 		int frequency;
 		string hash;
-		string left;	 //left child path
-		string right;	 //right child path
-		string parent;	 //parent path
+		filesystem::path left;	 //left child path
+		filesystem::path right;	 //right child path
+		filesystem::path parent;	 //parent path
 
 		Node(T data=T()): data(data), height(0), frequency(1), hash("HASH"), left("NULL"), right("NULL"), parent("NULL")
 		{}
 
-		void updateFile(const string& path)
+		void updateFile(const filesystem::path& path)
 		{
-			if (path== "NULL")
+			if (path == "NULL")
 				throw runtime_error("Attempting to access empty path.");
 
 			ofstream file;
@@ -51,7 +48,7 @@ private:
 			file.close();
 		}
 
-		static Node readFile(const string& path)
+		static Node readFile(const filesystem::path& path)
 		{
 			if(path== "NULL")
 				throw runtime_error("Attempting to access empty path.");
@@ -62,7 +59,7 @@ private:
 				throw runtime_error("Cannot open file for reading.");
 
 			Node node;
-			if constexpr (std::is_same<T, std::string>::value) 
+			if constexpr (is_same<T, string>::value) 
 			{
 				getline(file, node.data);
 				file >>node.height;
@@ -80,9 +77,9 @@ private:
 				file.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
 			}
 			getline(file, node.hash);
-			getline(file, node.left);
-			getline(file, node.right);
-			getline(file, node.parent);
+			file >> node.left;
+			file >> node.right;
+			file >> node.parent;
 			
 			file.close();
 			return node;
@@ -90,24 +87,35 @@ private:
 	};
 
 // ===================================== AVL functions ==========================================
-	string rootPath;
-	string folderPath;
+	filesystem::path rootPath;
+	filesystem::path folderPath;
 
 	//generate a filePath based on the value of a node
-	string generateFilePath(T value)
+	filesystem::path generateFilePath(T value)
 	{
-		string path=folderPath;
-		std::ostringstream oss;
-		oss << value; 
-		string name= oss.str();
-		path += "\\";
-		path += name;
-		path += ".txt";
-		return path;
+		if (!filesystem::exists(folderPath))
+		{
+			filesystem::create_directories(folderPath);
+		}
+
+		// Construct the file path
+		filesystem::path filePath = folderPath;
+		string fileName;
+		if constexpr (is_same<T, string>::value)
+		{
+			fileName = value;
+		}
+		else
+		{
+			fileName = std::to_string(value);
+		}
+		fileName = fileName + ".txt";
+		filePath /= fileName;
+		return filePath;
 	}
 
 	//get height of node
-	int Height(const string& path)
+	int Height(const filesystem::path& path)
 	{
 		if (path== "NULL")
 			return -1;
@@ -118,7 +126,7 @@ private:
 	}
 
 	//NOTE : updates height in file
-	void updateNodeHeight(const string& path)
+	void updateNodeHeight(const filesystem::path& path)
 	{
 		Node node = Node::readFile(path);
 		int leftHeight = Height(node.left);
@@ -130,7 +138,7 @@ private:
 	}
 
 	//BF = Right - Left
-	int balanceFactor(const string& path)
+	int balanceFactor(const filesystem::path& path)
 	{
 		Node node = Node::readFile(path);
 		int leftHeight = Height(node.left);
@@ -143,12 +151,12 @@ private:
 
 	//INPUT: PATH
 	//automatically updates parent, old and new pivots
-	void rotateRight(string& path)
+	void rotateRight(filesystem::path& path)
 	{
 		Node mainNode = Node::readFile(path);
 		Node leftNode = Node::readFile(mainNode.left);
-		string leftNodePath = mainNode.left;
-		string leftNodeKaRightPath = leftNode.right;
+		filesystem::path leftNodePath = mainNode.left;
+		filesystem::path leftNodeKaRightPath = leftNode.right;
 
 		//attach old pivot with new pivot's left subtree
 		mainNode.left = leftNodeKaRightPath;
@@ -187,12 +195,12 @@ private:
 
 	//INPUT: PATH
 	//automatically updates parent, old and new pivots
-	void rotateLeft(string& path)
+	void rotateLeft(filesystem::path& path)
 	{
 		Node mainNode = Node::readFile(path);
 		Node rightNode = Node::readFile(mainNode.right);
-		string rightNodePath = mainNode.right;
-		string rightNodeKaLeftPath = rightNode.left;
+		filesystem::path rightNodePath = mainNode.right;
+		filesystem::path rightNodeKaLeftPath = rightNode.left;
 
 		//attach old pivot with new pivot's left subtree
 		mainNode.right = rightNodeKaLeftPath;
@@ -230,7 +238,7 @@ private:
 	}
 
 	//returns 1 if rotations occured
-	bool balanceNode(string& path)
+	bool balanceNode(filesystem::path& path)
 	{
 		Node node = Node::readFile(path);
 		int BF= balanceFactor(path);
@@ -272,11 +280,11 @@ private:
 	}
 
 	//NOTE: updates path sent as parameter
-	void helperInsert(string& path, const string& parentPath, T data)
+	void helperInsert(filesystem::path& path, const filesystem::path& parentPath, T data)
 	{
 		if (path== "NULL")
 		{
-			string newFilePath = generateFilePath(data);
+			filesystem::path newFilePath = generateFilePath(data);
 			Node newNode(data);
 			newNode.parent = parentPath;
 			path = newFilePath;
@@ -311,7 +319,7 @@ private:
 		}
 	}
 
-	void inorderPrint(const string& path)
+	void inorderPrint(const filesystem::path& path)
 	{
 		if (path== "NULL")
 			return;
@@ -323,7 +331,7 @@ private:
 
 
 public:
-	AVL(string folderPath, string rootPath="NULL") : folderPath(folderPath), rootPath(rootPath)
+	AVL(filesystem::path folderPath, filesystem::path rootPath="NULL") : folderPath(folderPath), rootPath(rootPath)
 	{}
 
 	void insert(T data)
@@ -340,7 +348,7 @@ public:
 	void saveRootToFile()
 	{
 		ofstream file;
-		string path = folderPath;
+		filesystem::path path = folderPath;
 		path += "\\AVL_ROOT.txt";
 		file.open(path);
 		if (!file.is_open())

@@ -3,7 +3,7 @@ using namespace std;
 
 int main()
 {
-	AVL<string> tree("C:\\Users\\HP\\source\\repos\\ataraxiiaa\\DSA-Project\\Project1\\AVLTree1_NODES");
+	AVL<string> tree("C:\\Users\\HP\\source\\repos\\ataraxiiaa\\DSA-Project\\stringTree");
 	tree.insert("Fahad BIN FAISAL");
 	tree.insert("Ali nigger");
 	tree.insert("Ahmar");
@@ -14,7 +14,7 @@ int main()
 	tree.print();
 	cout << endl<<endl;
 
-	AVL<int> tree2("C:\\Users\\HP\\source\\repos\\ataraxiiaa\\DSA-Project\\Project1\\AVLTree2_NODES");
+	AVL<int> tree2("C:\\Users\\HP\\source\\repos\\ataraxiiaa\\DSA-Project\\intTree");
 	tree2.insert(5);
 	tree2.insert(7);
 	tree2.insert(2);
