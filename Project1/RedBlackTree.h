@@ -4,18 +4,21 @@
 #include <iostream>
 using namespace std;
 
-
+enum NodeColor {
+	RED,
+	BLACK
+};
 template<class T> 
 struct RedBlackNode {
 	T data;
 	RedBlackNode* left, * right, * parent;
-	string color;
+	NodeColor color;
 	RedBlackNode(T data, RedBlackNode* left = nullptr, RedBlackNode* right = nullptr, RedBlackNode* parent = nullptr) {
 		this->left = left;
 		this->right = right;
 		this->parent = parent;
 		this->data = data;
-		color = "RED";
+		color = RED;
 	}
 };
 
@@ -69,12 +72,12 @@ class RedBlackTree {
 	void fixOrientation(RedBlackNode<T>*& node) {
 		if (!node) return;
 		if (node == root) {
-			node->color = "BLACK";
+			node->color = BLACK;
 			return;
 		}
-		node->color = "RED";
+		node->color = RED;
 		RedBlackNode<T>* parent = node->parent;
-		if (parent->color == "RED") {
+		if (parent->color == RED) {
 			RedBlackNode<T>* grand = node->parent->parent;
 			RedBlackNode<T>* uncle = nullptr;
 			if (parent->data < grand->data) { // parent left so uncle right
@@ -84,36 +87,36 @@ class RedBlackTree {
 				uncle = grand->left;
 			}
 
-			if (uncle && uncle->color == "RED") {
-				uncle->color = "BLACK";
-				parent->color = "BLACK";
+			if (uncle && uncle->color == RED) {
+				uncle->color = BLACK;
+				parent->color = BLACK;
 
 				if (grand != root) {
-					grand->color = "RED";
+					grand->color = RED;
 				}
 			}
 			else {
 				int data = node->data;
 				if (data < parent->data && parent->data < grand->data) { // LL
-					grand->color = "RED";
-					parent->color = "BLACK";
+					grand->color = RED;
+					parent->color = BLACK;
 					rotateRight(grand);
 				}
 				else if (data > parent->data && parent->data > grand->data) { // RR
-					grand->color = "RED";
-					parent->color = "BLACK";
+					grand->color = RED;
+					parent->color = BLACK;
 					rotateLeft(grand);
 				}
 				else if (data < parent->data && parent->data > grand->data) { // RL
 					rotateRight(grand);
-					grand->color = "RED";
-					parent->color = "BLACK";
+					grand->color = RED;
+					parent->color = BLACK;;
 					rotateLeft(grand);
 				}
 				else if (data > parent->data && parent->data < grand->data) { // LR
 					rotateLeft(grand);
-					grand->color = "RED";
-					parent->color = "BLACK";
+					grand->color = RED;
+					parent->color = BLACK;
 					rotateRight(grand);
 				}
 			}
@@ -163,7 +166,10 @@ public:
 	}
 	void helper(RedBlackNode<T>* root) {
 		if (root) {
-			cout << root->data << " " << "(" << root->color << ") ";
+			cout << root->data << " " << "(";
+			if (root->color) cout << "BLACK";
+			else cout << "RED";
+			cout<< ") ";
 			helper(root->left);
 			helper(root->right);
 		}
