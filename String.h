@@ -8,7 +8,6 @@
 using namespace std;
 
 class String {
-	// think about the private data members
 	char* data;
 	int length;
 
@@ -27,14 +26,14 @@ public:
 	//from end //of string e.g. in case of “LOOP” if i=-1 OR i=3, it should return ‘P’
 		//similarly i = -4 OR i = 0, //return ‘L’
 		// Arithmetic Operators
-	String operator+(const String& str); // appends a String at the end of the String
-	String operator+(const char& str); // appends a char at the end of the String
-	String operator+(const char* str); // appends a String at the end of the String
+	String operator+=(const String& str); // appends a String at the end of the String
+	String operator+=(const char& str); // appends a char at the end of the String
+	String operator+=(const char* str); // appends a String at the end of the String
 
-	String operator-(const String& substr); //removes the substr from the String
-	String operator-(const char& str); //removes all occurrences of char from the String
-	String operator-(const char* str); //removes the str from the String
-
+	String operator-=(const String& substr); //removes the substr from the String
+	String operator-=(const char& str); //removes all occurrences of char from the String
+	String operator-=(const char* str); //removes the str from the String
+	
 	// Assignment Operators
 	String& operator=(const String&); // copies one String to another
 	String& operator=(char*); // copies one c-string to another
@@ -61,18 +60,24 @@ public:
 	operator int() const; // returns the length of string
 	~String() // destructor
 	{
-		//delete[] data;
+		delete[] data;
 	}
+
+	friend ostream& operator<<(ostream& output, const String& str);
+	friend istream& operator>>(istream& input, String& str);
 };
 
 ostream& operator<<(ostream& output, const String& str) // outputs the string
 {
-	output << str << "\n";
+	output << str.data;
 	return output;
 }
 istream& operator>>(istream& input, String& str) // inputs the string
 {
-	input >> str;
+	char ch;
+	while (input.get(ch) && (ch == ' ' || ch == '\n')) {}
+	while (input.get(ch) && ch != '\0' && ch != '\n' && ch != ' ')
+		str += ch;
 	return input;
 }
 
@@ -92,8 +97,9 @@ int Size(String str)
 }
 String::String()
 {
-	data = nullptr;
 	length = 0;
+	data = new char[length+1];
+	data[length] = '\0';
 }
 String::String(const char* str)
 {
@@ -140,7 +146,7 @@ const char String :: operator[](int i)const
 		return '\0';
 	}
 }
-String String::operator+(const String& str)
+String String::operator+=(const String& str)
 {
 	int strSize = Size(str);
 	int TotalLength = length + strSize;
@@ -155,12 +161,13 @@ String String::operator+(const String& str)
 		newData[index++] = str.data[i];
 	}
 	newData[index] = '\0';
+	delete[] data;
 	data = newData;
 	length = TotalLength;
 
 	return *this;
 }
-String String :: operator+(const char& str) // appends a char at the end of the String
+String String :: operator+=(const char& str) // appends a char at the end of the String
 {
 	int combinedLength = length + 1;
 
@@ -174,12 +181,13 @@ String String :: operator+(const char& str) // appends a char at the end of the 
 
 	appendedData[index] = '\0';
 
+	delete[] data;
 	data = appendedData;
 	length = combinedLength;
 
 	return *this;
 }
-String String :: operator+(const char* str)
+String String :: operator+=(const char* str)
 {
 
 	int strSize = Size(str);
@@ -195,12 +203,13 @@ String String :: operator+(const char* str)
 		newData[index++] = str[i];
 	}
 	newData[index] = '\0';
+	delete[] data;
 	data = newData;
 	length = TotalLength;
 
 	return *this;
 }
-String String :: operator-(const String& substr)
+String String :: operator-=(const String& substr)
 {
 	int strSize = Size(substr);
 	int NewLength = length - strSize;
@@ -228,11 +237,12 @@ String String :: operator-(const String& substr)
 		}
 	}
 	AppendedData[index] = '\0';
+	delete[] data;
 	this->data = AppendedData;
 	this->length = NewLength;
 	return *this;
 }
-String String::operator-(const char& str)
+String String::operator-=(const char& str)
 {
 	int NewLength = length - 1;
 	String NewString;
@@ -245,11 +255,12 @@ String String::operator-(const char& str)
 	}
 	NewString.data[index] = '\0';
 
+	delete[] data;
 	data = NewString.data;
 	this->length = NewLength;
 	return *this;
 }
-String String ::operator-(const char* str)
+String String ::operator-=(const char* str)
 {
 	int strSize = Size(str);
 	int NewLength = length - strSize;
@@ -277,6 +288,7 @@ String String ::operator-(const char* str)
 		}
 	}
 	AppendedData[index] = '\0';
+	delete[] data;
 	this->data = AppendedData;
 	this->length = NewLength;
 
@@ -344,18 +356,14 @@ String :: operator int() const
 }
 bool String :: operator!()
 {
-	int i = 0;
-	while (this->data[i] != '\0')
-	{
-		i++;
-	}
-	if (i != 0)
-		return false;
-	else
+	if (this->length == 0 || this->data[0] == '\0')
 		return true;
+	return false;
 }
 bool String :: operator==(const String& str) const
 {
+	if (this->length != str.length)
+		return false;
 	for (int i = 0; data[i] != '\0'; ++i)
 	{
 		if (data[i] != str.data[i])
@@ -367,6 +375,8 @@ bool String :: operator==(const String& str) const
 }
 bool String ::operator==(const char* str) const
 {
+	if (this->length != Size(str))
+		return false;
 	for (int i = 0; data[i] != '\0'; ++i)
 	{
 		if (data[i] != str[i])
@@ -385,7 +395,9 @@ String& String :: operator=(const String& str)
 		newData[i] = str.data[i];
 	}
 	newData[strSize] = '\0';
+	delete[] data;
 	this->data = newData;
+	this->length = strSize;
 	return *this;
 }
 String& String ::operator=(char* str)
@@ -397,6 +409,16 @@ String& String ::operator=(char* str)
 		newData[i] = str[i];
 	}
 	newData[strSize] = '\0';
+	delete[] data;
 	this->data = newData;
 	return *this;
+}
+
+void getline(istream& input, String& str) {
+	str = "";
+	char ch;
+	while (input.get(ch) && ch != '\n')
+	{
+		str += ch;
+	}
 }
