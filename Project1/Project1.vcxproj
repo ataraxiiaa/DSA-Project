@@ -128,12 +128,16 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="C:\Users\hp\Downloads\i230842_G_A2 (1)\i230842_G_A2\23i-0842_G_Q2.cpp" />
     <ClCompile Include="Source.cpp" />
   </ItemGroup>
+<<<<<<< HEAD
+=======
   <ItemGroup>
+    <ClInclude Include="C:\Users\hp\Downloads\i230842_G_A2 (1)\i230842_G_A2\23i-0842_G_Q2.h" />
     <ClInclude Include="RedBlackTree.h" />
-    <ClInclude Include="String.h" />
   </ItemGroup>
+>>>>>>> parent of 773ff02 (Added string class now)
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>
