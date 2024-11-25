@@ -128,12 +128,11 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="C:\Users\hp\Downloads\i230842_G_A2 (1)\i230842_G_A2\23i-0842_G_Q2.cpp" />
     <ClCompile Include="Source.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="C:\Users\hp\Downloads\i230842_G_A2 (1)\i230842_G_A2\23i-0842_G_Q2.h" />
     <ClInclude Include="RedBlackTree.h" />
+    <ClInclude Include="String.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

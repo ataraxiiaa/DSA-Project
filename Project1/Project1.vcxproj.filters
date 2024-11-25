@@ -18,16 +18,13 @@
     <ClCompile Include="Source.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="C:\Users\hp\Downloads\i230842_G_A2 (1)\i230842_G_A2\23i-0842_G_Q2.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="RedBlackTree.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="C:\Users\hp\Downloads\i230842_G_A2 (1)\i230842_G_A2\23i-0842_G_Q2.h">
-      <Filter>Source Files</Filter>
+    <ClInclude Include="String.h">
+      <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>
