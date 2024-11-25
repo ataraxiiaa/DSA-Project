@@ -4,11 +4,13 @@
 #include <fstream>
 #include <stdexcept>
 #include <sstream>
+#include <limits>
 using namespace std;
 
 //NOTE: try to keep file accessing at a minimum as that will slow the algorithm down.
 //if possible, open a required file not more than once
 
+using std::numeric_limits;
 template <class T>
 class AVL
 {
@@ -68,7 +70,7 @@ private:
 				file >>node.frequency;
 				file.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
 			}
-			else 
+			else
 			{
 				file >> node.data;
 				file.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
