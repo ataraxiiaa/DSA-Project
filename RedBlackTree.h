@@ -163,6 +163,7 @@ class RedBlackTree {
 	void fixDebt(RedBlackNode<T>*& node, bool hasDebt) {
 		if (node->color == RED) {
 			node->color = BLACK;
+			return;
 		}
 		else if (node != root && hasDebt) {
 			// handling debt cases
@@ -194,6 +195,20 @@ class RedBlackTree {
 			else if (!sibling || sibling->color == BLACK) {
 				if ((sibling->left && sibling->left->color == RED) ||
 					(sibling->right && sibling->right->color == RED)) {
+
+					if (sibling->data < parent->data && (sibling->left && sibling->left->color == RED)) { // LL
+						sibling->left->color == BLACK;
+						sibling->color = parent->color;
+						parent->color = BLACK;
+						rotateRight(parent);
+					}
+					else if (sibling->data > parent->data && (sibling->right && sibling->right->color == RED)) { // RR
+						sibling->right->color == BLACK;
+						sibling->color = parent->color;
+						parent->color = BLACK;
+						rotateLeft(parent);
+					}
+					else if(sibling->data < parent->data && (sibling->left && sibling->left))
 
 				}
 				else {
