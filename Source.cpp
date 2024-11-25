@@ -1,9 +1,16 @@
 #include "AVL.h"
+#include "RedBlackTree.h"
 using namespace std;
 
 int main()
 {
-	AVL<string> tree("C:\\Users\\HP\\source\\repos\\ataraxiiaa\\DSA-Project\\Project1\\AVLTree1_NODES");
+	RedBlackTree<int> rbt;
+	rbt.insert(10);
+	rbt.insert(15);
+	rbt.insert(8);
+	rbt.preOrder();
+
+	AVL<string> tree("../DSA-Project/Project1/AVLTree1_NODES");
 	tree.insert("Fahad BIN FAISAL");
 	tree.insert("Ali nigger");
 	tree.insert("Ahmar");
@@ -14,7 +21,7 @@ int main()
 	tree.print();
 	cout << endl<<endl;
 
-	AVL<int> tree2("C:\\Users\\HP\\source\\repos\\ataraxiiaa\\DSA-Project\\Project1\\AVLTree2_NODES");
+	AVL<int> tree2("../DSA-Project/Project1/AVLTree2_NODES");
 	tree2.insert(5);
 	tree2.insert(7);
 	tree2.insert(2);
