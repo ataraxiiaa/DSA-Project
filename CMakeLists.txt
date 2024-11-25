@@ -10,4 +10,4 @@ set(CMAKE_CXX_STANDARD_REQUIRED True)
 # Add the executable
 add_executable(MyProject
         AVL.h
-        Source.cpp)
+        Source.cpp "RedBlackTree.h")
