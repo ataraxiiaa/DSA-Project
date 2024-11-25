@@ -31,6 +31,7 @@ class RedBlackTree {
 	};
 	RedBlackNode* root;
 	//===================================== RedBlackNode Functions ==========================================
+	//===================================== Encapsulated Functions ==========================================
 	void rotateRight(RedBlackNode*& node) {
 		RedBlackNode* temp = node->left;
 		node->left = temp->right;
@@ -328,7 +329,7 @@ class RedBlackTree {
 
 public:
 	RedBlackTree() :root(nullptr) {}
-
+	//===================================== UI Functions ==========================================
 	void insert(T value) {
 		insertNode(root, value);
 	}
