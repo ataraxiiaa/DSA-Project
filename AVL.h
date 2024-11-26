@@ -383,6 +383,7 @@ private:
 						updateNodeHeight(node.parent);
 					}
 					removeFile(path);
+					path = "NULL";
 					return;
 				}
 
@@ -403,6 +404,7 @@ private:
 						updateNodeHeight(node.parent);
 					}
 					removeFile(path);
+					path = "NULL";
 					return;
 				}
 
