@@ -11,5 +11,11 @@ int main()
 	tree1.insert(24);
 
 	tree1.remove(20);
+	tree1.insert(22);
+	tree1.insert(30);
+	tree1.insert(29);
+
+	tree1.print();
+
 	return 0;
 }

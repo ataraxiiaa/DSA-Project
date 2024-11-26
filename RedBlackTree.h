@@ -464,6 +464,7 @@ class RedBlackTree {
 			if (node.left != "NULL") numofChildren++;
 			if (node.right != "NULL") numofChildren++;
 			if (numofChildren <= 1) {
+				// double debt case
 				if ((node.left != "NULL" && node.right == "NULL") ||
 					(node.right != "NULL" && node.left == "NULL") ||
 					node.right == "NULL" && node.left == "NULL") {
@@ -507,10 +508,13 @@ class RedBlackTree {
 					removeFile(path);
 					return;
 				}
+				// 1 children
 				else if (node.left == "NULL") {
+					bool debt = false;
 					if (node.right != "NULL")
 					{
 						RedBlackNode right = RedBlackNode::readFile(node.right);
+						debt = right.debt;
 						right.parent = node.parent;
 						right.updateFile(node.right);
 					}
@@ -520,14 +524,17 @@ class RedBlackTree {
 						parent.left == path ? parent.left = node.right : parent.right = node.right;
 						parent.updateFile(node.parent);
 					}
-					fixOrientation_Deletion(node.parent, node.debt);
+				
+					fixOrientation_Deletion(node.right, debt);
 					removeFile(path);
 					path = "NULL";
 				}
 				else if (node.right == "NULL") {
+					bool debt = false;
 					if (node.left != "NULL")
 					{
 						RedBlackNode left = RedBlackNode::readFile(node.left);
+						debt = left.debt;
 						left.parent = node.parent;
 						left.updateFile(node.left);
 					}
@@ -537,7 +544,7 @@ class RedBlackTree {
 						parent.right == path ? parent.right = node.left : parent.left = node.left;
 						parent.updateFile(node.parent);
 					}
-					fixOrientation_Deletion(node.parent, node.debt);
+					fixOrientation_Deletion(node.right, debt);
 					removeFile(path);
 					path = "NULL";
 				}
@@ -585,6 +592,26 @@ class RedBlackTree {
 			}
 		}
 	}
+	void inorderPrint(const filesystem::path& path, int depth = 0)
+	{
+		if (path.empty() || path == "NULL")
+		{
+			for (int a = 0; a < depth; a++)
+			{
+				cout << '\t';
+			}
+			cout << "-" << endl;
+			return;
+		}
+		RedBlackNode node = RedBlackNode::readFile(path);
+		inorderPrint(node.right, depth + 1);
+		for (int a = 0; a < depth; a++)
+		{
+			cout << '\t';
+		}
+		cout << node.data <<"("<<node.color<<")"<<endl;
+		inorderPrint(node.left, depth + 1);
+	}
 	filesystem::path root;
 	filesystem::path folderPath;
 
@@ -601,6 +628,9 @@ public:
 			throw runtime_error("Tree is Empty.");
 		}
 		removeNode(root, value);
+	}
+	void print() {
+		inorderPrint(root);
 	}
 	filesystem::path Search(filesystem::path root, T value) {
 		if (root == "NULL") {
@@ -621,19 +651,4 @@ public:
 			return root; 
 		}
 	}
-
-	/*
-	void helper(RedBlackNode* root) {
-		if (root) {
-			cout << root->data << " " << "(";
-			if (root->color) cout << "BLACK";
-			else cout << "RED";
-			cout << ") ";
-			helper(root->left);
-			helper(root->right);
-		}
-	}
-	void preOrder() {
-		helper(root);
-	}*/
 };
