@@ -2,11 +2,13 @@
 
 #include <string>
 #include <iostream>
+#include <filesystem>
 using namespace std;
+using namespace std::filesystem;
 
 enum NodeColor {
-	RED,
-	BLACK
+	RED, // 0
+	BLACK // 1
 };
 
 
@@ -15,324 +17,286 @@ class RedBlackTree {
 	//===================================== RedBlackNode Node ==========================================
 	struct RedBlackNode {
 		T data;
-		RedBlackNode* left, * right, * parent;
+		string hash;
+		filesystem::path left;
+		filesystem::path right;
+		filesystem::path parent;
 		NodeColor color;
 		bool debt;
 		int frequency;
-		RedBlackNode(T data, RedBlackNode* left = nullptr, RedBlackNode* right = nullptr, RedBlackNode* parent = nullptr) {
-			this->left = left;
-			this->right = right;
-			this->parent = parent;
+		RedBlackNode(T data = T()) {
 			this->data = data;
 			color = RED;
 			debt = false;
 			frequency = 1;
+			hash = "HASH";
+			left = "NULL";
+			right = "NULL";
+			parent = "NULL";
+		}
+		void updateFile(const filesystem::path& path) {
+			if (path == "NULL") {
+				throw runtime_error("Unable to find path");
+			}
+			ofstream file;
+			file.open(path);
+			if (!file.is_open()) {
+				throw runtime_error("Error..Unable to open file for Writing");
+			}
+
+			file << this->data << '\n';
+			file << this->frequency << '\n';
+			file << this->color << '\n';
+			file << this->hash << '\n';
+			file << this->left << '\n';
+			file << this->right << '\n';
+			file << this->parent << '\n';
+			file.close();
+		}
+		static RedBlackNode readFile(const filesystem::path& path) {
+			if (path == "NULL") {
+				throw runtime_error("Accessing NULL path");
+			}
+			ifstream file;
+			file.open(path);
+			if (!file.is_open()) {
+				throw runtime_error("Unable to open file for reading..");
+			}
+
+			RedBlackNode node;
+			if constexpr (is_same<T, string>::value) {
+				getline(file, node.data); 
+			}
+			else {
+				file >> node.data; 
+				file.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+			}
+			file >> node.frequency;
+			file.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+			int color;
+			file >> color;
+			node.color = static_cast<NodeColor>(color);
+			file.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+
+			getline(file, node.hash);
+			file >> node.left;
+			file >> node.right;
+			file >> node.parent;
+
+			file.close();
+			return node;
 		}
 	};
-	RedBlackNode* root;
+	//===================================== File Functions ==========================================
+	filesystem::path createPath(T value) {
+		if (!filesystem::exists(folderPath)) {
+			cout << "Created file directory successfully: "<<folderPath << endl;
+			filesystem::create_directories(folderPath);
+		}
+		filesystem::path newPath = folderPath;
+		string fileName;
+		if constexpr (is_same<T, string>::value) {
+			fileName = value;
+		}
+		else {
+			fileName = to_string(value);
+		}
+		fileName += ".txt";
+		newPath /= fileName;
+		return newPath;
+	}
 	//===================================== RedBlackNode Functions ==========================================
 	//===================================== Encapsulated Functions ==========================================
-	void rotateRight(RedBlackNode*& node) {
-		RedBlackNode* temp = node->left;
-		node->left = temp->right;
-		if (temp->right) temp->right->parent = node;
-		temp->right = node;
+	void rotateRight(filesystem::path& path) {
+		RedBlackNode node = RedBlackNode::readFile(path);
 
-		if (node->parent) {
-			if (node->data < node->parent->data) {
-				node->parent->left = temp;
+		if (node.left == "NULL") {
+			throw runtime_error("Cannot perform right rotation on a node with no left child.");
+		}
+		RedBlackNode leftNode = RedBlackNode::readFile(node.left);
+		filesystem::path leftPath = node.left;        
+		filesystem::path grandRightPath = leftNode.right; 
+
+		node.left = grandRightPath;
+		if (grandRightPath != "NULL") {
+			RedBlackNode grandRightNode = RedBlackNode::readFile(grandRightPath);
+			grandRightNode.parent = path; 
+			grandRightNode.updateFile(grandRightPath); 
+		}
+
+		leftNode.parent = node.parent;
+
+		if (node.parent != "NULL") {
+			RedBlackNode parentNode = RedBlackNode::readFile(node.parent);
+			if (parentNode.left == path) {
+				parentNode.left = leftPath; 
 			}
 			else {
-				node->parent->right = temp;
+				parentNode.right = leftPath; 
 			}
+			parentNode.updateFile(node.parent); 
 		}
 		else {
-			root = temp;
+			root = leftPath;
 		}
-		RedBlackNode* temp2 = node->parent;
-		node->parent = temp;
-		temp->parent = temp2;
-		node = temp;
+
+		leftNode.right = path;
+		node.parent = leftPath; 
+		node.color = RED;
+		leftNode.color = BLACK;
+		node.updateFile(path);        
+		leftNode.updateFile(leftPath); 
+		
 	}
-	void rotateLeft(RedBlackNode*& node) {
-		RedBlackNode* temp = node->right;
-		node->right = temp->left;
-		if (temp->left) temp->left->parent = node;
-		temp->left = node;
-		if (node->parent) {
-			if (node->data < node->parent->data) {
-				node->parent->right = temp;
+	void rotateLeft(filesystem::path& path) {
+		RedBlackNode node = RedBlackNode::readFile(path);
+		RedBlackNode rightNode = RedBlackNode::readFile(node.right);
+		filesystem::path rightPath = node.right; 
+		filesystem::path grandLeftChildPath = rightNode.left; 
+		node.right = grandLeftChildPath;
+
+		if (grandLeftChildPath != "NULL") {
+			RedBlackNode grandLeftChildNode = RedBlackNode::readFile(grandLeftChildPath);
+			grandLeftChildNode.parent = path;
+			grandLeftChildNode.updateFile(grandLeftChildPath); 
+		}
+		rightNode.parent = node.parent;
+
+		if (node.parent != "NULL") {
+			RedBlackNode parentNode = RedBlackNode::readFile(node.parent);
+			if (parentNode.left == path) {
+				parentNode.left = rightPath; 
 			}
 			else {
-				node->parent->left = temp;
+				parentNode.right = rightPath; 
 			}
+			parentNode.updateFile(node.parent); 
 		}
 		else {
-			root = temp;
+			root = rightPath;
 		}
-		RedBlackNode* temp2 = node->parent;
-		node->parent = temp;
-		temp->parent = temp2;
-		node = temp;
+
+		rightNode.left = path;
+		node.parent = rightPath; 
+		node.color = RED;
+		rightNode.color = BLACK;
+		node.updateFile(path);  
+		rightNode.updateFile(rightPath);
+		
 	}
 
-	void fixOrientation_Insertion(RedBlackNode*& node) {
-		if (!node) return;
-		if (node == root) {
-			node->color = BLACK;
+	void fixOrientation_Insertion(filesystem::path& path) {
+		if (path == "NULL") return;
+		if (path == root) {
+			RedBlackNode node = RedBlackNode::readFile(path);
+			node.color = BLACK;
+			node.updateFile(path);
 			return;
 		}
-		node->color = RED;
-		RedBlackNode* parent = node->parent;
-		if (parent->color == RED) {
-			RedBlackNode* grand = node->parent->parent;
-			RedBlackNode* uncle = nullptr;
-			if (parent->data < grand->data) { // parent left so uncle right
-				uncle = grand->right;
-			}
-			else {
-				uncle = grand->left;
+		RedBlackNode node = RedBlackNode::readFile(path);
+		filesystem::path Parentpath = node.parent;
+		RedBlackNode parent = RedBlackNode::readFile(Parentpath);
+
+		if (parent.color == RED) {
+			filesystem::path grandParentPath = parent.parent;
+			RedBlackNode grandParent = RedBlackNode::readFile(grandParentPath);
+			filesystem::path unclePath = grandParent.left == Parentpath ? grandParent.right : grandParent.left;
+			RedBlackNode uncle;
+			if (unclePath != "NULL") {
+				uncle = RedBlackNode::readFile(unclePath);
 			}
 
-			if (uncle && uncle->color == RED) {
-				uncle->color = BLACK;
-				parent->color = BLACK;
-
-				if (grand != root) {
-					grand->color = RED;
+			if (unclePath != "NULL" && uncle.color == RED) {
+				uncle.color = BLACK;
+				parent.color = BLACK;
+				if (grandParentPath != root) {
+					grandParent.color = RED;
+					grandParent.updateFile(grandParentPath);
 				}
+				uncle.updateFile(unclePath);
+				parent.updateFile(Parentpath);
 			}
 			else {
-				int data = node->data;
-				if (data < parent->data && parent->data < grand->data) { // LL
-					grand->color = RED;
-					parent->color = BLACK;
-					rotateRight(grand);
+				bool isleftChild = (grandParent.left == Parentpath);
+				bool isNodeLeftChild = (parent.left == path);
+
+				if (isleftChild && isNodeLeftChild) { // LL
+					rotateRight(grandParentPath);
 				}
-				else if (data > parent->data && parent->data > grand->data) { // RR
-					grand->color = RED;
-					parent->color = BLACK;
-					rotateLeft(grand);
+				else if (!isleftChild && !isNodeLeftChild) { // RR
+					rotateLeft(grandParentPath);
 				}
-				else if (data < parent->data && parent->data > grand->data) { // RL
-					rotateRight(grand);
-					grand->color = RED;
-					parent->color = BLACK;
-					rotateLeft(grand);
+				else if (isleftChild && !isNodeLeftChild) { // LR
+					rotateLeft(Parentpath);
+					rotateRight(grandParentPath);
 				}
-				else if (data > parent->data && parent->data < grand->data) { // LR
-					rotateLeft(grand);
-					grand->color = RED;
-					parent->color = BLACK;
-					rotateRight(grand);
+				else if (!isleftChild && isNodeLeftChild) { // Rl
+					rotateRight(Parentpath);
+					rotateLeft(grandParentPath);
 				}
 			}
 		}
 	}
-	void insertNode(RedBlackNode*& root, T data) {
-		if (!root) {
-			root = new RedBlackNode(data);
-			fixOrientation_Insertion(root);
+	void insertNode(filesystem::path& path,T data) {
+		if (path == "NULL") {
+			filesystem::path newPath = createPath(data);
+			RedBlackNode newNode(data);
+			newNode.parent = "NULL";
+			path = newPath;
+			newNode.color = BLACK;
+			newNode.updateFile(newPath);
 			return;
 		}
 		else {
-			if (data == root->data) {
-				// handling same case
+			RedBlackNode curr = RedBlackNode::readFile(path);
+			if (data == curr.data) {
+				curr.frequency++;
+				curr.updateFile(path);
 				return;
 			}
-			else if (data < root->data) {
-				if (!root->left) {
-					root->left = new RedBlackNode(data);
-					root->left->parent = root;
-					fixOrientation_Insertion(root->left);
+			else if (data < curr.data) {
+				if (curr.left == "NULL") {
+					filesystem::path newPath = createPath(data);
+					RedBlackNode newNode(data);
+					newNode.parent = path;
+					curr.left = newPath;
+					newNode.updateFile(newPath);
+					curr.updateFile(path);
+					fixOrientation_Insertion(newPath);
 					return;
 				}
 				else {
-					insertNode(root->left, data);
+					insertNode(curr.left, data);
 				}
 			}
-			else if (data > root->data) {
-				if (!root->right) {
-					root->right = new RedBlackNode(data);
-					root->right->parent = root;
-					fixOrientation_Insertion(root->right);
+			else if (data > curr.data) {
+				if (curr.right == "NULL") {
+					filesystem::path newPath = createPath(data);
+					RedBlackNode newNode(data);
+					newNode.parent = path;
+					curr.right = newPath;
+					newNode.updateFile(newPath);
+					curr.updateFile(path);
+					fixOrientation_Insertion(newPath);
 					return;
 				}
 				else {
-					insertNode(root->right, data);
+					insertNode(curr.right, data);
 				}
 			}
 		}
 	}
-	void fixDebt(RedBlackNode*& node) {
-		if (node->color == RED) {
-			node->color = BLACK;
-		}
-		else if (node != root) {
-			// handling debt cases
-			RedBlackNode* parent = node->parent;
-			RedBlackNode* sibling;
-			if (parent->left == node) {
-				sibling = parent->right;
-			}
-			else {
-				sibling = parent->left;
-			}
-			// case 1
-			if (sibling && sibling->color == RED) {
-				// swap sibling and parent colors
-				parent->color = RED;
-				sibling->color = BLACK;
-				// rotate on indebt childs side
-				// sibling right so rotate left
-				if (sibling->data > parent->data) {
-					rotateLeft(parent);
-				}
-				else {
-					rotateRight(parent);
-				}
-				// recursively check up the tree to ensure rules stay same
-				fixDebt(node);
-			}
-
-			else if (sibling->color == BLACK) {
-				if ((sibling->left && sibling->left->color == RED) ||
-					(sibling->right && sibling->right->color == RED)) {
-
-					if (sibling->data < parent->data && (sibling->left && sibling->left->color == RED)) { // LL
-						sibling->left->color == BLACK;
-						sibling->color = parent->color;
-						parent->color = BLACK;
-						rotateRight(parent);
-					}
-					else if (sibling->data > parent->data && (sibling->right && sibling->right->color == RED)) { // RR
-						sibling->right->color == BLACK;
-						sibling->color = parent->color;
-						parent->color = BLACK;
-						rotateLeft(parent);
-					}
-					else if (sibling->data < parent->data && (sibling->left && sibling->left->color == BLACK)) { // LR
-						sibling->right->color == BLACK;
-						sibling->color = parent->color;
-						parent->color = BLACK;
-						rotateLeft(sibling);
-						rotateRight(parent);
-					}
-					else if (sibling->data > parent->data && (sibling->right && sibling->right->color == BLACK)) { // LR
-						sibling->right->color == BLACK;
-						sibling->color = parent->color;
-						parent->color = BLACK;
-						rotateRight(sibling);
-						rotateLeft(parent);
-					}
-				}
-				else {
-					sibling->color = RED;
-					if (parent->color == RED) parent->color = BLACK;
-					else if (parent->color == BLACK && parent != root) fixDebt(parent);
-				}
-			}
-		}
-		if (node == this->root) {
-			node->color = BLACK;
-			return;
-		}
-		if (node && node->debt) {
-			if (node->parent->left == node)
-				node->parent->left = nullptr;
-			else
-				node->parent->right = nullptr;
-			delete node;
-			node = nullptr;
-		}
-	}
-	void fixOrientation_Deletion(RedBlackNode*& node, bool debt) {
-		if (node->color == RED) {
-			node->color = BLACK;
-			return;
-		}
-		else if(node != root && debt)
-		{
-			fixDebt(node);
-		}
-	}
-	void removeNode(RedBlackNode*& root, T value) {
-		if (!root) {
-			cout << "Unable to find value..\n";
-			return;
-		}
-		if (value < root->data) {
-			removeNode(root->left, value);
-		}
-		else if (value > root->data) {
-			removeNode(root->right, value);
-		}
-		else {
-			// found Node
-			// condition to see if node has debt
-			if ((root->left && !root->right) || (root->right && !root->left) || (!root->left && !root->right)) {
-				if (root->color == BLACK && ((!root->left && !root->right) ||
-					(root->left && root->left->color == BLACK ||
-						root->right && root->right->color == BLACK))) {
-					root->debt = true;
-				}
-				// No children
-				if (!root->left && !root->right) {
-					if (root == this->root) {
-						delete root;
-						root = nullptr;
-						return;
-					}
-					else if(root->color == RED)
-					{
-						if (root) {
-							if (root->parent->right == root) {
-								root->parent->right = nullptr;
-							}
-							else {
-								root->parent->left = nullptr;
-							}
-						}
-						delete root;
-						root = nullptr;
-						return;
-					}
-				}
-				// 1 child
-				else if (!root->left) { // right child
-					RedBlackNode<T>* temp = root;
-					root = root->right;
-					root->parent = temp->parent;
-					root->parent->right = root;
-					delete temp;
-				}
-				else if (!root->right) { // left child
-					RedBlackNode<T>* temp = root;
-					root = root->left;
-					root->parent = temp->parent;
-					root->parent->left = root;
-					delete temp;
-				}
-				fixOrientation_Deletion(root, root->debt);
-			}
-			// 2 Children
-			else if (root->left && root->right) {
-				RedBlackNode<T>*& successor = root->left;
-				while (successor && successor->right) successor = successor->right;
-				T temp = successor->data;
-				successor->data = root->data;
-				root->data = temp;
-				removeNode(successor, successor->data);
-			}
-		}
-	}
+	filesystem::path root;
+	filesystem::path folderPath;
 
 public:
-	RedBlackTree() :root(nullptr) {}
+	filesystem::path Root()const { return root; }
+	RedBlackTree(filesystem::path folderPath,filesystem::path root = "NULL") :root(root),folderPath(folderPath) {}
 	//===================================== UI Functions ==========================================
 	void insert(T value) {
 		insertNode(root, value);
 	}
+	/*
 	void remove(T value) {
 		if (!root) {
 			cout << "Tree is empty\n";
@@ -365,8 +329,7 @@ public:
 			helper(root->right);
 		}
 	}
-	RedBlackNode* Root()const { return root; }
 	void preOrder() {
 		helper(root);
-	}
+	}*/
 };
