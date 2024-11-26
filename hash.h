@@ -1,6 +1,6 @@
 
 //global hash functions for int, char, string class in repo:
-//Lesgooooooooo
+//Lesgooooo
 
 //for int:
 
