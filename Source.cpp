@@ -8,7 +8,8 @@ int main()
 	tree1.insert(20);
 	tree1.insert(10);
 	tree1.insert(5);
-	tree1.remove(10);
-	cout<<tree1.Root();
+	tree1.insert(24);
+
+	tree1.remove(20);
 	return 0;
 }
