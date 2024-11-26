@@ -156,11 +156,12 @@ class RedBlackTree {
 		leftNode.color = BLACK;
 		node.updateFile(path);        
 		leftNode.updateFile(leftPath); 
-		
+		// path = leftPath;
 	}
 	void rotateLeft(filesystem::path& path) {
 		RedBlackNode node = RedBlackNode::readFile(path);
 		RedBlackNode rightNode = RedBlackNode::readFile(node.right);
+
 		filesystem::path rightPath = node.right; 
 		filesystem::path grandLeftChildPath = rightNode.left; 
 		node.right = grandLeftChildPath;
@@ -192,7 +193,7 @@ class RedBlackTree {
 		rightNode.color = BLACK;
 		node.updateFile(path);  
 		rightNode.updateFile(rightPath);
-		
+		// path = rightPath;
 	}
 
 	void fixOrientation_Insertion(filesystem::path& path) {
@@ -297,9 +298,11 @@ class RedBlackTree {
 		}
 	}
 	void fixDebt(filesystem::path& path) {
-		if (path == "NULL") return;
-
+		if (path == "NULL" ) return;
+		RedBlackNode parent;
+		RedBlackNode sibling;
 		RedBlackNode node = RedBlackNode::readFile(path);
+
 		if (node.color == RED) {
 			node.color = BLACK;
 			node.updateFile(path);
@@ -307,10 +310,10 @@ class RedBlackTree {
 		}
 		else if (path != root) {
 			filesystem::path parentPath = node.parent;
-			RedBlackNode parent = RedBlackNode::readFile(parentPath);
+			parent = RedBlackNode::readFile(parentPath);
 
 			filesystem::path siblingPath = (parent.left == path) ? parent.right : parent.left;
-			RedBlackNode sibling = RedBlackNode::readFile(siblingPath);
+			sibling = RedBlackNode::readFile(siblingPath);
 
 			// Case 1: Sibling is RED
 			if (siblingPath != "NULL" && sibling.color == RED) {
@@ -333,7 +336,9 @@ class RedBlackTree {
 			// Case 2: Sibling is BLACK
 			else if (sibling.color == BLACK) {
 				filesystem::path leftNephewPath = sibling.left;
+				cout << leftNephewPath << endl;
 				filesystem::path rightNephewPath = sibling.right;
+				cout << rightNephewPath << endl;
 				RedBlackNode leftNephew = (leftNephewPath != "NULL") ? RedBlackNode::readFile(leftNephewPath) : RedBlackNode();
 				RedBlackNode rightNephew = (rightNephewPath != "NULL") ? RedBlackNode::readFile(rightNephewPath) : RedBlackNode();
 
@@ -375,7 +380,6 @@ class RedBlackTree {
 
 						rotateLeft(siblingPath);
 
-						// Now perform LL
 						leftNephew = RedBlackNode::readFile(sibling.left);
 						leftNephew.color = BLACK;
 						sibling.color = parent.color;
@@ -397,7 +401,6 @@ class RedBlackTree {
 
 						rotateRight(siblingPath);
 
-						// Now perform RR
 						rightNephew = RedBlackNode::readFile(sibling.right);
 						rightNephew.color = BLACK;
 						sibling.color = parent.color;
@@ -419,11 +422,27 @@ class RedBlackTree {
 						parent.color = BLACK;
 						parent.updateFile(parentPath);
 					}
-					else {
+					else if (parent.color == BLACK && parentPath != root)
+					{
 						fixDebt(parentPath);
 					}
 				}
 			}
+		}
+		if (path == root) {
+			node.color = BLACK;
+			node.updateFile(path);
+			return;
+		}
+		if (path != "NULL" && node.debt) {
+			if (parent.left == path)
+				parent.left = "NULL";
+			else
+				parent.right = "NULL";
+			parent.updateFile(node.parent);
+			removeFile(path);
+			path = "NULL";
+			return;
 		}
 	}
 
@@ -471,17 +490,20 @@ class RedBlackTree {
 					if (node.color == BLACK) {
 						if (node.left == "NULL" && node.right == "NULL") {
 							node.debt = true;
+							node.updateFile(path);
 						}
 						else if (node.left != "NULL") {
 							RedBlackNode temp = RedBlackNode::readFile(node.left);
 							if (temp.color == BLACK) {
 								node.debt = true;
+								node.updateFile(path);
 							}
 						}
 						else if (node.right != "NULL") {
 							RedBlackNode temp = RedBlackNode::readFile(node.right);
 							if (temp.color == BLACK) {
 								node.debt = true;
+								node.updateFile(path);
 							}
 						}
 					}
@@ -492,29 +514,34 @@ class RedBlackTree {
 						path = "NULL";
 						return;
 					}
-					else {
+					else if(node.color == RED)
+					{
 						filesystem::path parentPath = node.parent;
 						RedBlackNode parent = RedBlackNode::readFile(parentPath);
-
-						if (parent.left == path) {
-							parent.left = "NULL";
+						if (root != "NULL") {
+							if (parent.left == path) {
+								parent.left = "NULL";
+							}
+							else {
+								parent.right = "NULL";
+							}
+							parent.updateFile(parentPath);
 						}
-						else {
-							parent.right = "NULL";
-						}
-						parent.updateFile(parentPath);
+						removeFile(path);
+						path = "NULL";
+						return;
 					}
-					fixOrientation_Deletion(node.parent, node.debt);
-					removeFile(path);
+					fixOrientation_Deletion(path, node.debt);
+					cout << path << endl;
 					return;
+					/*removeFile(path);
+					return;*/
 				}
 				// 1 children
 				else if (node.left == "NULL") {
-					bool debt = false;
 					if (node.right != "NULL")
 					{
 						RedBlackNode right = RedBlackNode::readFile(node.right);
-						debt = right.debt;
 						right.parent = node.parent;
 						right.updateFile(node.right);
 					}
@@ -525,16 +552,15 @@ class RedBlackTree {
 						parent.updateFile(node.parent);
 					}
 				
-					fixOrientation_Deletion(node.right, debt);
+					fixOrientation_Deletion(node.right, node.debt);
 					removeFile(path);
 					path = "NULL";
+
 				}
 				else if (node.right == "NULL") {
-					bool debt = false;
 					if (node.left != "NULL")
 					{
 						RedBlackNode left = RedBlackNode::readFile(node.left);
-						debt = left.debt;
 						left.parent = node.parent;
 						left.updateFile(node.left);
 					}
@@ -544,7 +570,7 @@ class RedBlackTree {
 						parent.right == path ? parent.right = node.left : parent.left = node.left;
 						parent.updateFile(node.parent);
 					}
-					fixOrientation_Deletion(node.right, debt);
+					fixOrientation_Deletion(node.left, node.debt);
 					removeFile(path);
 					path = "NULL";
 				}
