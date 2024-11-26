@@ -18,7 +18,7 @@ public:
 	String(const String&); // copy constructor to initialize the string from the existing
 	//string
 	String(int x); // initializes a string of predefined size
-	char* getdata(); //returns the string inside the object
+	char* getData() const; //returns the string inside the object
 	// Binary Operators //
 	//Sub - script Operators
 	const char operator[](int i) const; // returns the character at index [x]
@@ -37,6 +37,13 @@ public:
 	// Assignment Operators
 	String& operator=(const String&); // copies one String to another
 	String& operator=(char*); // copies one c-string to another
+
+	bool operator <(const String& other) const;
+	bool operator >(const String& other) const;
+
+	bool operator <=(const String& other) const;
+	bool operator >=(const String& other) const;
+
 
 	//Logical Operators
 	bool operator==(const String&) const; // returns true if two Strings are equal
@@ -127,7 +134,7 @@ String::String(int x)
 		data[i] = '\0';
 	}
 }
-char* String::getdata()
+char* String::getData() const
 {
 	return data;
 }
@@ -422,4 +429,44 @@ void getline(istream& input, String& str) {
 	{
 		str += ch;
 	}
+}
+
+bool String::operator<(const String& other) const 
+{
+	int index = 0;
+	while (this->data[index] != '\0' && other.data[index] != '\0') {
+		if (this->data[index] < other.data[index]) {
+			return true;
+		}
+		else if (this->data[index] > other.data[index]) {
+			return false;
+		}
+		index++;
+	}
+	return this->length < other.length;
+}
+
+bool String::operator>(const String& other) const 
+{
+	int index = 0;
+	while (this->data[index] != '\0' && other.data[index] != '\0') {
+		if (this->data[index] > other.data[index]) {
+			return true;
+		}
+		else if (this->data[index] < other.data[index]) {
+			return false;
+		}
+		index++;
+	}
+	return this->length > other.length;
+}
+
+inline bool String::operator<=(const String& other) const
+{
+	return ((*this < other) || (*this == other));
+}
+
+inline bool String::operator>=(const String& other) const
+{
+	return ((*this > other) || (*this == other));
 }
