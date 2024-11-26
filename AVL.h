@@ -91,7 +91,7 @@ private:
 	filesystem::path folderPath;
 
 	//generate a filePath based on the value of a node
-	filesystem::path generateFilePath(T value)
+	filesystem::path generateFilePath(const T& value)
 	{
 		if (!filesystem::exists(folderPath))
 		{
@@ -102,7 +102,7 @@ private:
 		filesystem::path filePath = folderPath;
 		if constexpr (is_same<T, String>::value)
 		{
-			filePath /= value.getdata();
+			filePath /= value.getData();
 		}
 		else
 		{
@@ -112,10 +112,21 @@ private:
 		return filePath;
 	}
 
+	bool removeFile(filesystem::path& path)
+	{
+		if (filesystem::exists(path))
+		{
+			filesystem::remove(path);
+			return true;
+		}
+		return false;
+			
+	}
+
 	//get height of node
 	int Height(const filesystem::path& path)
 	{
-		if (path== "NULL")
+		if (path.empty() || path== "NULL")
 			return -1;
 		else
 		{
@@ -126,6 +137,9 @@ private:
 	//NOTE : updates height in file
 	void updateNodeHeight(const filesystem::path& path)
 	{
+		if (path.empty() || path == "NULL")
+			return;
+
 		Node node = Node::readFile(path);
 		int leftHeight = Height(node.left);
 		int rightHeight = Height(node.right);
@@ -246,7 +260,7 @@ private:
 		{
 			int rightBF = balanceFactor(node.right);
 
-			if (rightBF == 1)
+			if (rightBF == 1 || rightBF == 0)
 			{
 				rotateLeft(path);
 			}
@@ -262,7 +276,7 @@ private:
 		{
 			int leftBF = balanceFactor(node.left);
 
-			if (leftBF == -1)
+			if (leftBF == -1 || leftBF == 0)
 			{
 				rotateRight(path);
 			}
@@ -278,7 +292,7 @@ private:
 	}
 
 	//NOTE: updates path sent as parameter
-	void helperInsert(filesystem::path& path, const filesystem::path& parentPath, T data)
+	void helperInsert(filesystem::path& path, const filesystem::path& parentPath, const T& data)
 	{
 		if (path== "NULL")
 		{
@@ -317,14 +331,158 @@ private:
 		}
 	}
 
-	void inorderPrint(const filesystem::path& path)
+	//Updates path sent as para
+	void helperRemove(filesystem::path& path, const T& data)
 	{
-		if (path== "NULL")
+		//didnt find element
+		if (path.empty() || path == "NULL")
+		{
+			cout << "ERROR IN DELETION: Key \'" << data << "\' does not exist." << endl;
 			return;
+		}
+
 		Node node = Node::readFile(path);
-		inorderPrint(node.left);
-		cout <<'('<< node.data << ',' << node.frequency<<"), ";
-		inorderPrint(node.right);
+
+		//find the element
+		if (data < node.data)
+		{
+			helperRemove(node.left, data);
+		}
+		else if (data > node.data)
+		{
+			helperRemove(node.right, data);
+		}
+		//element found
+		else
+		{
+			//only decrement frequency if it is >1
+			if (node.frequency > 1)
+			{
+				node.frequency--;
+				node.updateFile(path);
+				return;
+			}
+			else
+			{
+				//have to completely remove file
+
+				//Case 1: No left child
+				if (node.left == "NULL")
+				{
+					if (node.right != "NULL")
+					{
+						Node right = Node::readFile(node.right);
+						right.parent = node.parent;
+						right.updateFile(node.right);
+					}
+					if (node.parent != "NULL")
+					{
+						Node parent = Node::readFile(node.parent);
+						parent.left == path ? parent.left = node.right : parent.right = node.right;
+						parent.updateFile(node.parent);
+						updateNodeHeight(node.parent);
+					}
+					removeFile(path);
+					return;
+				}
+
+				//Case 2: No right child
+				else if (node.right == "NULL")
+				{
+					if (node.left != "NULL")
+					{
+						Node left = Node::readFile(node.left);
+						left.parent = node.parent;
+						left.updateFile(node.left);
+					}
+					if (node.parent != "NULL")
+					{
+						Node parent = Node::readFile(node.parent);
+						parent.left == path ? parent.left = node.left : parent.right = node.left;
+						parent.updateFile(node.parent);
+						updateNodeHeight(node.parent);
+					}
+					removeFile(path);
+					return;
+				}
+
+				//Case 3: Both childs exist
+				else if (node.right != "NULL" && node.left != "NULL")
+				{
+					//find inorder successor
+					Node successor = Node::readFile(node.right);
+					filesystem::path successorPath = node.right;
+
+					while (successor.left != "NULL")
+					{
+						successorPath = successor.left;
+						successor = Node::readFile(successor.left);
+					}
+
+					//replace nodes data with successor data
+					node.data = successor.data;
+					node.frequency = successor.frequency;
+					node.hash = successor.hash;
+					node.updateFile(path);
+					filesystem::path updatedPath = generateFilePath(successor.data);
+
+					//delete successor from right subtree
+					successor.frequency = 1;
+					successor.updateFile(successorPath);
+					helperRemove(node.right, successor.data);
+					
+					//rename the node that just got replaced and update the new path in all neighbors
+					node = Node::readFile(path);
+					filesystem::rename(path,updatedPath);
+					if (node.parent!= "NULL")
+					{
+						Node parent = Node::readFile(node.parent);
+						parent.left == path ? parent.left = updatedPath : parent.right = updatedPath;
+						parent.updateFile(node.parent);
+					}
+					if (node.left != "NULL")
+					{
+						Node left = Node::readFile(node.left);
+						left.parent = updatedPath;
+						left.updateFile(node.left);
+					}
+					if (node.right != "NULL")
+					{
+						Node right = Node::readFile(node.right);
+						right.parent = updatedPath;
+						right.updateFile(node.right);
+					}
+					path = updatedPath;
+				}
+			}
+		}
+		//rolling back after deletion, balance any imbalanced nodes
+		int BF = balanceFactor(path);
+		if (BF >= 2 || BF <= -2)
+		{
+			balanceNode(path);
+		}
+	}
+
+	void inorderPrint(const filesystem::path& path, int depth=0)
+	{
+		if (path.empty() || path == "NULL")
+		{
+			for (int a = 0; a < depth; a++)
+			{
+				cout << '\t';
+			}
+			cout << "-" << endl;
+			return;
+		}
+		Node node = Node::readFile(path);
+		inorderPrint(node.right, depth+1);
+		for (int a = 0; a < depth; a++)
+		{
+			cout << '\t';
+		}
+		cout << node.data << endl;
+		inorderPrint(node.left, depth+1);
 	}
 
 
@@ -332,13 +490,17 @@ public:
 	AVL(filesystem::path folderPath, filesystem::path rootPath="NULL") : folderPath(folderPath), rootPath(rootPath)
 	{}
 
-	void insert(T data)
+	void insert(const T& data)
 	{
 		helperInsert(rootPath,"NULL", data);
 	}
+	void remove(const T& data)
+	{
+		helperRemove(rootPath, data);
+	}
+
 	void print()
 	{
-		cout << "(data, frequency): ";
 		inorderPrint(rootPath);
 	}
 
@@ -347,7 +509,7 @@ public:
 	{
 		ofstream file;
 		filesystem::path path = folderPath;
-		path += "\\AVL_ROOT.txt";
+		path += "\\ROOT.txt";
 		file.open(path);
 		if (!file.is_open())
 			throw runtime_error("Cannot open file: \'AVL_Root.txt\' for writing.");
