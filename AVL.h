@@ -1,6 +1,6 @@
 #pragma once
 #include<iostream>
-#include <string>
+#include "String.h"
 #include <fstream>
 #include<filesystem>
 using namespace std;
@@ -19,12 +19,12 @@ private:
 		T data;
 		int height;
 		int frequency;
-		string hash;
+		String hash;
 		filesystem::path left;	 //left child path
 		filesystem::path right;	 //right child path
 		filesystem::path parent;	 //parent path
 
-		Node(T data=T()): data(data), height(0), frequency(1), hash("HASH"), left("NULL"), right("NULL"), parent("NULL")
+		Node(T data=T()): data(data), height(0), frequency(1), hash("InsertHashHere"), left("NULL"), right("NULL"), parent("NULL")
 		{}
 
 		void updateFile(const filesystem::path& path)
@@ -59,7 +59,7 @@ private:
 				throw runtime_error("Cannot open file for reading.");
 
 			Node node;
-			if constexpr (is_same<T, string>::value) 
+			if constexpr (is_same<T, String>::value) 
 			{
 				getline(file, node.data);
 				file >>node.height;
@@ -100,17 +100,15 @@ private:
 
 		// Construct the file path
 		filesystem::path filePath = folderPath;
-		string fileName;
-		if constexpr (is_same<T, string>::value)
+		if constexpr (is_same<T, String>::value)
 		{
-			fileName = value;
+			filePath /= value.getdata();
 		}
 		else
 		{
-			fileName = std::to_string(value);
+			filePath /= to_string(value);
 		}
-		fileName = fileName + ".txt";
-		filePath /= fileName;
+		filePath.replace_extension(".txt");
 		return filePath;
 	}
 
