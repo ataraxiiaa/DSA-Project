@@ -226,6 +226,7 @@ class RedBlackTree {
 				}
 				uncle.updateFile(unclePath);
 				parent.updateFile(Parentpath);
+				fixOrientation_Insertion(grandParentPath);
 			}
 			else {
 				bool isleftChild = (grandParent.left == Parentpath);
@@ -635,7 +636,7 @@ class RedBlackTree {
 		{
 			cout << '\t';
 		}
-		cout << node.data <<"("<<node.color<<")"<<endl;
+		cout << node.data <<"("<<node.color<<" , "<<node.frequency<<")"<<endl;
 		inorderPrint(node.left, depth + 1);
 	}
 	filesystem::path root;
