@@ -7,6 +7,11 @@
 #include <iostream>
 using namespace std;
 
+bool isAlphabet(char c)
+{
+	return ((c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'z'));
+}
+
 class String {
 	char* data;
 	int length;
@@ -375,6 +380,8 @@ bool String :: operator==(const String& str) const
 	{
 		if (data[i] != str.data[i])
 		{
+			if (isAlphabet(data[i]) && isAlphabet(str.data[i]) && ((data[i] + 32 )== str.data[i] || (data[i] - 32 )== str.data[i]))
+				continue;
 			return false;
 		}
 	}
@@ -388,6 +395,8 @@ bool String ::operator==(const char* str) const
 	{
 		if (data[i] != str[i])
 		{
+			if (isAlphabet(data[i]) && isAlphabet(str[i]) && ((data[i] + 32 )== str[i] || (data[i] - 32 )== str[i]))
+				continue;
 			return false;
 		}
 	}
@@ -422,10 +431,10 @@ String& String ::operator=(char* str)
 	return *this;
 }
 
-void getline(istream& input, String& str) {
+void getline(istream& input, String& str, char delim='\n') {
 	str = "";
 	char ch;
-	while (input.get(ch) && ch != '\n')
+	while (input.get(ch) && ch != delim)
 	{
 		str += ch;
 	}
@@ -434,11 +443,19 @@ void getline(istream& input, String& str) {
 bool String::operator<(const String& other) const 
 {
 	int index = 0;
-	while (this->data[index] != '\0' && other.data[index] != '\0') {
-		if (this->data[index] < other.data[index]) {
+	while (this->data[index] != '\0' && other.data[index] != '\0') 
+	{
+		if (isAlphabet(data[index]) && isAlphabet(other.data[index]) && ((data[index] + 32 )== other.data[index] || (data[index] - 32 )== other.data[index]))
+		{
+			index++;
+			continue;
+		}
+		if (this->data[index] < other.data[index]) 
+		{
 			return true;
 		}
-		else if (this->data[index] > other.data[index]) {
+		else if (this->data[index] > other.data[index])
+		{
 			return false;
 		}
 		index++;
@@ -449,11 +466,19 @@ bool String::operator<(const String& other) const
 bool String::operator>(const String& other) const 
 {
 	int index = 0;
-	while (this->data[index] != '\0' && other.data[index] != '\0') {
-		if (this->data[index] > other.data[index]) {
+	while (this->data[index] != '\0' && other.data[index] != '\0')
+	{
+		if (isAlphabet(data[index]) && isAlphabet(other.data[index]) && ((data[index] + 32 )== other.data[index] || (data[index] - 32 )== other.data[index]))
+		{
+			index++;
+			continue;
+		}
+		if (this->data[index] > other.data[index]) 
+		{
 			return true;
 		}
-		else if (this->data[index] < other.data[index]) {
+		else if (this->data[index] < other.data[index])
+		{
 			return false;
 		}
 		index++;
