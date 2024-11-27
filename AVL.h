@@ -37,8 +37,10 @@ private:
 
 			ofstream file;
 			file.open(path);
-			if (!file.is_open())
+			if (!file.is_open()) {
+				cout << path << endl;
 				throw runtime_error("Cannot open file for writing.");
+			}
 
 			file << this->data << '\n';
 			file << this->height << '\n';
