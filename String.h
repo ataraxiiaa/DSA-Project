@@ -77,6 +77,11 @@ public:
 
 	friend ostream& operator<<(ostream& output, const String& str);
 	friend istream& operator>>(istream& input, String& str);
+
+	int getSize()
+	{
+		return this->length;
+	}
 };
 
 ostream& operator<<(ostream& output, const String& str) // outputs the string
