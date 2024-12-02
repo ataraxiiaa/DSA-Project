@@ -5,12 +5,11 @@ class Stack
 	class Node
 	{
 	public:
-		T data;
-		Node<T>* next;
+		T& data;
+		Node* next;
 
-		Node(T data = NULL )
+		Node(T& data):data(data)
 		{
-			this->data = data;
 			next = nullptr;
 		}
 		Node()
@@ -19,7 +18,7 @@ class Stack
 		}
 	};
 
-	Node<T>* top;
+	Node* top;
 
 public:
 
@@ -43,13 +42,13 @@ public:
 		return this->top->data;
 	}
 
-	void push(T val)
+	void push(T& val)
 	{
 		Node<T>* temp = new Node<T>(val);
 		temp->next = top;
 		top = temp;
 	}
-	T pop()
+	T& pop()
 	{
 		if (isEmpty())
 		{
@@ -57,7 +56,7 @@ public:
 			return T();
 		}
 
-		T temp = top->data;
+		T& temp = top->data;
 		Node<T>* deletingNode = top;
 		top = top->next;
 		delete deletingNode;
