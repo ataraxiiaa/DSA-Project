@@ -93,11 +93,6 @@ private:
 	//generate a filePath based on the value of a node
 	filesystem::path generateFilePath(const T& value)
 	{
-		if (!filesystem::exists(folderPath))
-		{
-			filesystem::create_directories(folderPath);
-		}
-
 		// Construct the file path
 		filesystem::path filePath = folderPath;
 		if constexpr (is_same<T, String>::value)
@@ -108,7 +103,7 @@ private:
 		{
 			filePath /= to_string(value);
 		}
-		filePath.replace_extension(".txt");
+		filePath+=".txt";
 		return filePath;
 	}
 
@@ -314,7 +309,7 @@ private:
 			{
 				helperInsert(current.right, path, data);
 			}
-			else
+			else if(data==current.data)
 			{
 				current.frequency++;
 				current.updateFile(path);
@@ -487,10 +482,29 @@ private:
 		inorderPrint(node.left, depth+1);
 	}
 
+	void helperF(filesystem::path path, int& f)
+	{
+		if (path == "NULL")
+			return;
+		Node node = Node::readFile(path);
+		helperF(node.left, f);
+		f += node.frequency;
+		helperF(node.right, f);
+	}
 
 public:
 	AVL(filesystem::path folderPath, filesystem::path rootPath="NULL") : folderPath(folderPath), rootPath(rootPath)
-	{}
+	{
+		if (!filesystem::exists(folderPath))
+		{
+			filesystem::create_directories(folderPath);
+		}
+		if (rootPath != "NULL")
+		{
+			if (!filesystem::exists(rootPath))
+				throw runtime_error("Root path does not exist.");
+		}
+	}
 
 	void insert(const T& data)
 	{
@@ -503,6 +517,7 @@ public:
 
 	void print()
 	{
+		cout << "---------------------------------------------------- "<<endl;
 		inorderPrint(rootPath);
 	}
 
@@ -517,6 +532,13 @@ public:
 			throw runtime_error("Cannot open file: \'AVL_Root.txt\' for writing.");
 		file << rootPath << endl;
 		file.close();
+	}
+
+	void displayFrequency()
+	{
+		int f = 0;
+		helperF(rootPath, f);
+		cout << "Total Frequency:" << f << endl;
 	}
 };
 
