@@ -1,7 +1,0 @@
-7
-1
-1
-HASH
-NULL
-C:\Users\HP\source\repos\ataraxiiaa\DSA-Project\Project1\AVLTree2_NODES\9.txt
-C:\Users\HP\source\repos\ataraxiiaa\DSA-Project\Project1\AVLTree2_NODES\5.txt

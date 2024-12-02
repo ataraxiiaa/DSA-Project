@@ -1,16 +1,13 @@
 #pragma once
 #include<iostream>
-#include <string>
+#include "String.h"
 #include <fstream>
-#include <stdexcept>
-#include <sstream>
-#include <limits>
+#include<filesystem>
 using namespace std;
 
 //NOTE: try to keep file accessing at a minimum as that will slow the algorithm down.
 //if possible, open a required file not more than once
 
-using std::numeric_limits;
 template <class T>
 class AVL
 {
@@ -22,17 +19,17 @@ private:
 		T data;
 		int height;
 		int frequency;
-		string hash;
-		string left;	 //left child path
-		string right;	 //right child path
-		string parent;	 //parent path
+		String hash;
+		filesystem::path left;	 //left child path
+		filesystem::path right;	 //right child path
+		filesystem::path parent;	 //parent path
 
-		Node(T data=T()): data(data), height(0), frequency(1), hash("HASH"), left("NULL"), right("NULL"), parent("NULL")
+		Node(T data=T()): data(data), height(0), frequency(1), hash("InsertHashHere"), left("NULL"), right("NULL"), parent("NULL")
 		{}
 
-		void updateFile(const string& path)
+		void updateFile(const filesystem::path& path)
 		{
-			if (path== "NULL")
+			if (path == "NULL")
 				throw runtime_error("Attempting to access empty path.");
 
 			ofstream file;
@@ -51,7 +48,7 @@ private:
 			file.close();
 		}
 
-		static Node readFile(const string& path)
+		static Node readFile(const filesystem::path& path)
 		{
 			if(path== "NULL")
 				throw runtime_error("Attempting to access empty path.");
@@ -62,7 +59,7 @@ private:
 				throw runtime_error("Cannot open file for reading.");
 
 			Node node;
-			if constexpr (std::is_same<T, std::string>::value) 
+			if constexpr (is_same<T, String>::value) 
 			{
 				getline(file, node.data);
 				file >>node.height;
@@ -80,9 +77,9 @@ private:
 				file.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
 			}
 			getline(file, node.hash);
-			getline(file, node.left);
-			getline(file, node.right);
-			getline(file, node.parent);
+			file >> node.left;
+			file >> node.right;
+			file >> node.parent;
 			
 			file.close();
 			return node;
@@ -90,26 +87,46 @@ private:
 	};
 
 // ===================================== AVL functions ==========================================
-	string rootPath;
-	string folderPath;
+	filesystem::path rootPath;
+	filesystem::path folderPath;
 
 	//generate a filePath based on the value of a node
-	string generateFilePath(T value)
+	filesystem::path generateFilePath(const T& value)
 	{
-		string path=folderPath;
-		std::ostringstream oss;
-		oss << value; 
-		string name= oss.str();
-		path += "\\";
-		path += name;
-		path += ".txt";
-		return path;
+		if (!filesystem::exists(folderPath))
+		{
+			filesystem::create_directories(folderPath);
+		}
+
+		// Construct the file path
+		filesystem::path filePath = folderPath;
+		if constexpr (is_same<T, String>::value)
+		{
+			filePath /= value.getData();
+		}
+		else
+		{
+			filePath /= to_string(value);
+		}
+		filePath.replace_extension(".txt");
+		return filePath;
+	}
+
+	bool removeFile(filesystem::path& path)
+	{
+		if (filesystem::exists(path))
+		{
+			filesystem::remove(path);
+			return true;
+		}
+		return false;
+			
 	}
 
 	//get height of node
-	int Height(const string& path)
+	int Height(const filesystem::path& path)
 	{
-		if (path== "NULL")
+		if (path.empty() || path== "NULL")
 			return -1;
 		else
 		{
@@ -118,8 +135,11 @@ private:
 	}
 
 	//NOTE : updates height in file
-	void updateNodeHeight(const string& path)
+	void updateNodeHeight(const filesystem::path& path)
 	{
+		if (path.empty() || path == "NULL")
+			return;
+
 		Node node = Node::readFile(path);
 		int leftHeight = Height(node.left);
 		int rightHeight = Height(node.right);
@@ -130,7 +150,7 @@ private:
 	}
 
 	//BF = Right - Left
-	int balanceFactor(const string& path)
+	int balanceFactor(const filesystem::path& path)
 	{
 		Node node = Node::readFile(path);
 		int leftHeight = Height(node.left);
@@ -143,12 +163,12 @@ private:
 
 	//INPUT: PATH
 	//automatically updates parent, old and new pivots
-	void rotateRight(string& path)
+	void rotateRight(filesystem::path& path)
 	{
 		Node mainNode = Node::readFile(path);
 		Node leftNode = Node::readFile(mainNode.left);
-		string leftNodePath = mainNode.left;
-		string leftNodeKaRightPath = leftNode.right;
+		filesystem::path leftNodePath = mainNode.left;
+		filesystem::path leftNodeKaRightPath = leftNode.right;
 
 		//attach old pivot with new pivot's left subtree
 		mainNode.left = leftNodeKaRightPath;
@@ -187,12 +207,12 @@ private:
 
 	//INPUT: PATH
 	//automatically updates parent, old and new pivots
-	void rotateLeft(string& path)
+	void rotateLeft(filesystem::path& path)
 	{
 		Node mainNode = Node::readFile(path);
 		Node rightNode = Node::readFile(mainNode.right);
-		string rightNodePath = mainNode.right;
-		string rightNodeKaLeftPath = rightNode.left;
+		filesystem::path rightNodePath = mainNode.right;
+		filesystem::path rightNodeKaLeftPath = rightNode.left;
 
 		//attach old pivot with new pivot's left subtree
 		mainNode.right = rightNodeKaLeftPath;
@@ -230,7 +250,7 @@ private:
 	}
 
 	//returns 1 if rotations occured
-	bool balanceNode(string& path)
+	bool balanceNode(filesystem::path& path)
 	{
 		Node node = Node::readFile(path);
 		int BF= balanceFactor(path);
@@ -240,7 +260,7 @@ private:
 		{
 			int rightBF = balanceFactor(node.right);
 
-			if (rightBF == 1)
+			if (rightBF == 1 || rightBF == 0)
 			{
 				rotateLeft(path);
 			}
@@ -256,7 +276,7 @@ private:
 		{
 			int leftBF = balanceFactor(node.left);
 
-			if (leftBF == -1)
+			if (leftBF == -1 || leftBF == 0)
 			{
 				rotateRight(path);
 			}
@@ -272,11 +292,11 @@ private:
 	}
 
 	//NOTE: updates path sent as parameter
-	void helperInsert(string& path, const string& parentPath, T data)
+	void helperInsert(filesystem::path& path, const filesystem::path& parentPath, const T& data)
 	{
 		if (path== "NULL")
 		{
-			string newFilePath = generateFilePath(data);
+			filesystem::path newFilePath = generateFilePath(data);
 			Node newNode(data);
 			newNode.parent = parentPath;
 			path = newFilePath;
@@ -311,28 +331,178 @@ private:
 		}
 	}
 
-	void inorderPrint(const string& path)
+	//Updates path sent as para
+	void helperRemove(filesystem::path& path, const T& data)
 	{
-		if (path== "NULL")
+		//didnt find element
+		if (path.empty() || path == "NULL")
+		{
+			cout << "ERROR IN DELETION: Key \'" << data << "\' does not exist." << endl;
 			return;
+		}
+
 		Node node = Node::readFile(path);
-		inorderPrint(node.left);
-		cout <<'('<< node.data << ',' << node.frequency<<"), ";
-		inorderPrint(node.right);
+
+		//find the element
+		if (data < node.data)
+		{
+			helperRemove(node.left, data);
+		}
+		else if (data > node.data)
+		{
+			helperRemove(node.right, data);
+		}
+		//element found
+		else
+		{
+			//only decrement frequency if it is >1
+			if (node.frequency > 1)
+			{
+				node.frequency--;
+				node.updateFile(path);
+				return;
+			}
+			else
+			{
+				//have to completely remove file
+
+				//Case 1: No left child
+				if (node.left == "NULL")
+				{
+					if (node.right != "NULL")
+					{
+						Node right = Node::readFile(node.right);
+						right.parent = node.parent;
+						right.updateFile(node.right);
+					}
+					if (node.parent != "NULL")
+					{
+						Node parent = Node::readFile(node.parent);
+						parent.left == path ? parent.left = node.right : parent.right = node.right;
+						parent.updateFile(node.parent);
+						updateNodeHeight(node.parent);
+					}
+					removeFile(path);
+					path = "NULL";
+					return;
+				}
+
+				//Case 2: No right child
+				else if (node.right == "NULL")
+				{
+					if (node.left != "NULL")
+					{
+						Node left = Node::readFile(node.left);
+						left.parent = node.parent;
+						left.updateFile(node.left);
+					}
+					if (node.parent != "NULL")
+					{
+						Node parent = Node::readFile(node.parent);
+						parent.left == path ? parent.left = node.left : parent.right = node.left;
+						parent.updateFile(node.parent);
+						updateNodeHeight(node.parent);
+					}
+					removeFile(path);
+					path = "NULL";
+					return;
+				}
+
+				//Case 3: Both childs exist
+				else if (node.right != "NULL" && node.left != "NULL")
+				{
+					//find inorder successor
+					Node successor = Node::readFile(node.right);
+					filesystem::path successorPath = node.right;
+
+					while (successor.left != "NULL")
+					{
+						successorPath = successor.left;
+						successor = Node::readFile(successor.left);
+					}
+
+					//replace nodes data with successor data
+					node.data = successor.data;
+					node.frequency = successor.frequency;
+					node.hash = successor.hash;
+					node.updateFile(path);
+					filesystem::path updatedPath = generateFilePath(successor.data);
+
+					//delete successor from right subtree
+					successor.frequency = 1;
+					successor.updateFile(successorPath);
+					helperRemove(node.right, successor.data);
+					
+					//rename the node that just got replaced and update the new path in all neighbors
+					node = Node::readFile(path);
+					filesystem::rename(path,updatedPath);
+					if (node.parent!= "NULL")
+					{
+						Node parent = Node::readFile(node.parent);
+						parent.left == path ? parent.left = updatedPath : parent.right = updatedPath;
+						parent.updateFile(node.parent);
+					}
+					if (node.left != "NULL")
+					{
+						Node left = Node::readFile(node.left);
+						left.parent = updatedPath;
+						left.updateFile(node.left);
+					}
+					if (node.right != "NULL")
+					{
+						Node right = Node::readFile(node.right);
+						right.parent = updatedPath;
+						right.updateFile(node.right);
+					}
+					path = updatedPath;
+				}
+			}
+		}
+		//rolling back after deletion, balance any imbalanced nodes
+		int BF = balanceFactor(path);
+		if (BF >= 2 || BF <= -2)
+		{
+			balanceNode(path);
+		}
+	}
+
+	void inorderPrint(const filesystem::path& path, int depth=0)
+	{
+		if (path.empty() || path == "NULL")
+		{
+			for (int a = 0; a < depth; a++)
+			{
+				cout << '\t';
+			}
+			cout << "-" << endl;
+			return;
+		}
+		Node node = Node::readFile(path);
+		inorderPrint(node.right, depth+1);
+		for (int a = 0; a < depth; a++)
+		{
+			cout << '\t';
+		}
+		cout << node.data << endl;
+		inorderPrint(node.left, depth+1);
 	}
 
 
 public:
-	AVL(string folderPath, string rootPath="NULL") : folderPath(folderPath), rootPath(rootPath)
+	AVL(filesystem::path folderPath, filesystem::path rootPath="NULL") : folderPath(folderPath), rootPath(rootPath)
 	{}
 
-	void insert(T data)
+	void insert(const T& data)
 	{
 		helperInsert(rootPath,"NULL", data);
 	}
+	void remove(const T& data)
+	{
+		helperRemove(rootPath, data);
+	}
+
 	void print()
 	{
-		cout << "(data, frequency): ";
 		inorderPrint(rootPath);
 	}
 
@@ -340,8 +510,8 @@ public:
 	void saveRootToFile()
 	{
 		ofstream file;
-		string path = folderPath;
-		path += "\\AVL_ROOT.txt";
+		filesystem::path path = folderPath;
+		path += "\\ROOT.txt";
 		file.open(path);
 		if (!file.is_open())
 			throw runtime_error("Cannot open file: \'AVL_Root.txt\' for writing.");
