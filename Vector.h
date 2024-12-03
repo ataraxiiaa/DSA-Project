@@ -26,7 +26,7 @@ public:
 			for (int i = 0; i < maxSize; ++i)
 				temp[i] = ptr[i];
 			delete[] ptr;
-			maxSize<<1;
+			maxSize=maxSize<<1;
 			ptr = temp;
 		}
 		ptr[currSize] = value;

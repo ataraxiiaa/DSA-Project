@@ -3,9 +3,10 @@
 	23i-0842
 	G
 */
-
+#pragma once
 #include <iostream>
 using namespace std;
+
 
 bool isAlphabet(char c)
 {
@@ -38,7 +39,7 @@ public:
 	String operator-=(const String& substr); //removes the substr from the String
 	String operator-=(const char& str); //removes all occurrences of char from the String
 	String operator-=(const char* str); //removes the str from the String
-	
+
 	// Assignment Operators
 	String& operator=(const String&); // copies one String to another
 	String& operator=(char*); // copies one c-string to another
@@ -436,7 +437,7 @@ String& String ::operator=(char* str)
 	return *this;
 }
 
-bool getline(istream& input, String& str, char delim='\n') {
+inline bool getline(istream& input, String& str, char delim='\n') {
 	str = "";
 	char ch;
 	while (input.get(ch) && ch != delim)
