@@ -436,13 +436,18 @@ String& String ::operator=(char* str)
 	return *this;
 }
 
-void getline(istream& input, String& str, char delim='\n') {
+bool getline(istream& input, String& str, char delim='\n') {
 	str = "";
 	char ch;
 	while (input.get(ch) && ch != delim)
 	{
 		str += ch;
 	}
+
+	if (input.eof() || input.fail()) {
+		return !str;
+	}
+	return true;
 }
 
 bool String::operator<(const String& other) const 
