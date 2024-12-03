@@ -1,32 +1,27 @@
 #include "AVL.h"
 #include "RedBlackTree.h"
-#include "Btree.h"
 using namespace std;
 
 int main()
 {
-	AVL<string> tree("C:\\Users\\HP\\source\\repos\\ataraxiiaa\\DSA-Project\\Project1\\AVLTree1_NODES");
-	tree.insert("Fahad BIN FAISAL");
-	tree.insert("Ali nigger");
-	tree.insert("Ahmar");
-	tree.insert("ALIBROTHER HEHE");
-	tree.insert("goat");
-	tree.insert("A VERY LONG MEESSAGE I CAN FINALLY READ SPACES HAHA");
-	tree.saveRootToFile();
-	tree.print();
-	cout << endl<<endl;
+	RedBlackTree<int> tree1("C:\\Users\\HP\\source\\repos\\ataraxiiaa\\DSA-Project\\RedBlackTreetest");
+	int values[] = { 20,15,25,10,5,30,35,40,50,45,60,55,65,70,
+					1,8,3,6 };
+		// 1, 8, 3, 6, 12, 18, 22, 28, 32, 38, 48, 52, 58, 62, 68 };
 
-	AVL<int> tree2("C:\\Users\\HP\\source\\repos\\ataraxiiaa\\DSA-Project\\intTree");
-	tree2.insert(5);
-	tree2.insert(7);
-	tree2.insert(2);
-	tree2.insert(4);
-	tree2.insert(1);
-	tree2.insert(9);
-	tree2.insert(5);
-	tree2.saveRootToFile();
-	tree2.print();*/
+	// Insert values into the tree
+	for (int val : values) {
+		tree1.insert(val);
+	}
+	// Print tree structure
+	cout << tree1.Root();
+	tree1.print();
 
-
+	int deleteValues[] = { 1,20, 10, 30, 65, 50, 55, 25 };
+	for (int val : deleteValues) {
+		cout << "\nDeleting " << val << "..." << std::endl;
+		tree1.remove(val);
+		tree1.print();
+	}
 	return 0;
 }
