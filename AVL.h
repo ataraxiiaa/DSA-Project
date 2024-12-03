@@ -1,6 +1,7 @@
 #pragma once
 #include<iostream>
 #include "String.h"
+#include"ParentTree.h"
 #include <fstream>
 #include<filesystem>
 using namespace std;
@@ -9,7 +10,7 @@ using namespace std;
 //if possible, open a required file not more than once
 
 template <class T>
-class AVL
+class AVL: public ParentTree<T>
 {
 private:
 
@@ -493,8 +494,9 @@ private:
 	}
 
 public:
-	AVL(filesystem::path folderPath, filesystem::path rootPath="NULL") : folderPath(folderPath), rootPath(rootPath)
+	AVL(filesystem::path folderPath, filesystem::path rootPath = "NULL") : folderPath(folderPath), rootPath(rootPath)
 	{
+		folderPath /= "AVL";
 		if (!filesystem::exists(folderPath))
 		{
 			filesystem::create_directories(folderPath);
@@ -506,16 +508,16 @@ public:
 		}
 	}
 
-	void insert(const T& data)
+	void insert(const T& data) override
 	{
 		helperInsert(rootPath,"NULL", data);
 	}
-	void remove(const T& data)
+	void remove(const T& data) override
 	{
 		helperRemove(rootPath, data);
 	}
 
-	void print()
+	void print() override
 	{
 		cout << "---------------------------------------------------- "<<endl;
 		inorderPrint(rootPath);
