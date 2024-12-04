@@ -53,6 +53,10 @@ public:
 			currSize--; // Adjust the current Size
 		}
 	}
+	void clear() {
+		currSize = 0;
+	}
+
 	Type& back() {
 		return ptr[currSize - 1];
 	}
