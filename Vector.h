@@ -17,6 +17,18 @@ public:
 		currSize = 0;
 		maxSize = 5;
 	}
+
+	//copy constructor
+	Vector(const Vector& copy)
+	{
+		this->maxSize = copy.maxSize;
+		this->currSize = copy.currSize;
+		this->ptr = new T[maxSize];
+		for (int a = 0; a < currSize; a++)
+		{
+			this->ptr[a] = copy.ptr[a];
+		}
+	}
 	~Vector() { delete[] ptr; } // Destructor
 
 	// Adding values to the array
