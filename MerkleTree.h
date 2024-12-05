@@ -449,7 +449,7 @@ public:
 	filesystem::path rootPath;
 	filesystem::path folderPath;
 
-	MerkleTree(filesystem::path folderPath, filesystem::path rootPath = "NULL") : folderPath(folderPath), rootPath(rootPath)
+	MerkleTree(filesystem::path folderPath) : folderPath(folderPath), rootPath("NULL")
 	{
 		this->folderPath /= "MerkleTree" ;
 		if (!filesystem::exists(this->folderPath))
@@ -458,11 +458,11 @@ public:
 			filesystem::path nodesPath = this->folderPath / "NODES";
 			filesystem::create_directories(nodesPath);
 		}
-		if (rootPath != "NULL")
-		{
-			if (!filesystem::exists(this->rootPath))
-				throw runtime_error("Root path does not exist.");
-		}
+	}
+	MerkleTree(filesystem::path folderPath, filesystem::path rootPath): folderPath(folderPath), rootPath(rootPath)
+	{
+		if (!filesystem::exists(this->folderPath) || (!filesystem::exists(this->rootPath)))
+			throw runtime_error("Path does not exist.");
 	}
 
 	void insert(const long long& index, const RowEntry& row)

@@ -512,10 +512,10 @@ private:
 
 public:
 
-	AVL(filesystem::path folderPath, filesystem::path rootPath = "NULL") 
+	AVL(filesystem::path folderPath) 
 	{
 		this->folderPath = folderPath;
-		this->rootPath = rootPath;
+		this->rootPath = "NULL";
 		this->folderPath /= "AVL";
 		if (!filesystem::exists(this->folderPath))
 		{
@@ -528,6 +528,13 @@ public:
 			if (!filesystem::exists(rootPath))
 				throw runtime_error("Root path does not exist.");
 		}
+	}
+	AVL(filesystem::path folderPath, filesystem::path rootPath)
+	{
+		this->folderPath = folderPath;
+		this->rootPath = rootPath;
+		if (!filesystem::exists(this->folderPath) || (!filesystem::exists(this->rootPath)))
+			throw runtime_error("Path does not exist.");
 	}
 
 	void insert(const T& data, const long long& rowIndex) override
