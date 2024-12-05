@@ -1,27 +1,26 @@
 #include "AVL.h"
 #include "RedBlackTree.h"
+#include "Btree.h"
 using namespace std;
 
 int main()
 {
-	RedBlackTree<int> tree1("C:\\Users\\HP\\source\\repos\\ataraxiiaa\\DSA-Project\\RedBlackTreetest");
-	int values[] = { 20,15,25,10,5,30,35,40,50,45,60,55,65,70,
-					1,8,3,6 };
-		// 1, 8, 3, 6, 12, 18, 22, 28, 32, 38, 48, 52, 58, 62, 68 };
-
-	// Insert values into the tree
-	for (int val : values) {
-		tree1.insert(val);
-	}
-	// Print tree structure
-	cout << tree1.Root();
-	tree1.print();
-
-	int deleteValues[] = { 1,20, 10, 30, 65, 50, 55, 25 };
-	for (int val : deleteValues) {
-		cout << "\nDeleting " << val << "..." << std::endl;
-		tree1.remove(val);
-		tree1.print();
-	}
+	Btree<int> tree1("C:\\Users\\HP\\source\\repos\\ataraxiiaa\\DSA-Project\\Btree",4);
+	tree1.insert(5);
+	tree1.insert(7);
+	tree1.insert(8);
+	tree1.insert(9);
+	tree1.insert(10);
+	tree1.insert(11);
+	tree1.insert(12);
+	tree1.insert(4);
+	tree1.insert(15);
+	tree1.insert(3);
+	tree1.insert(19);
+	tree1.insert(22);
+	tree1.insert(25);
+	tree1.insert(6);
+	tree1.insert(26);
+	tree1.insert(29);
 	return 0;
 }

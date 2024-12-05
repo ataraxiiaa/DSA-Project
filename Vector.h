@@ -17,7 +17,7 @@ public:
 		currSize = 0;
 		maxSize = 5;
 	}
-	~Vector() { delete[] ptr; } // Destructor
+	// ~Vector() { delete[] ptr; } // Destructor
 
 	// Adding values to the array
 	void push_back(Type value) {
@@ -53,10 +53,45 @@ public:
 			currSize--; // Adjust the current Size
 		}
 	}
+	void pop() {
+		currSize--;
+	}
 	void clear() {
 		currSize = 0;
 	}
-
+	void insertSorted(Type val) {
+		bool inBetween = false;
+		int index = 0;
+		for (int i = 0; i < currSize; i++) {
+			if (ptr[i] > val) {
+				inBetween = true;
+				index = i;
+				break;
+			}
+		}
+		if (inBetween) inserAt(val, index);
+		else push_back(val);
+	}
+	void inserAt(const Type& data,int index) {
+		if ((index > (currSize + 1)) || (index < 0)) {
+			return;
+		}
+		if (currSize == maxSize-1) {
+			Type* temp = new Type[2 * maxSize];
+			for (int i = 0; i < currSize; ++i) {
+				temp[i] = ptr[i];
+			}
+			delete[] ptr;
+			ptr = temp;
+			maxSize *= 2;
+		}
+		currSize++;
+		int i;
+		for (i = currSize; i > index; i--) {
+			ptr[i] = ptr[i - 1];
+		}
+		ptr[i] = data;
+	}
 	Type& back() {
 		return ptr[currSize - 1];
 	}
