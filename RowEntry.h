@@ -1,56 +1,101 @@
 #pragma once
 #include "String.h"
+#include "Vector.h"
 #include <filesystem>
 using namespace std;
+
 
 struct RowEntry
 {
 	long long rowIndex;
-	String name;
-	int age;
-	String gender;
-	String bloodType;
-	String medicalCondition;
-	String dateOfAdmission;
-	String doctor;
-	String hospital;
-	String insuranceProvider;
-	double billingAmount;
-	int roomNumber;
-	String admissionType;
-	String dischargeDate;
-	String medication;
-	String testResults;
+    Vector<String> cells;
 
-	//writing
-	friend ostream& operator<<(ostream& os, const RowEntry& row)
-	{
-		os << row.name << ',' << row.age << ',' << row.gender << ',' << row.bloodType << ','
-			<< row.medicalCondition << ',' << row.dateOfAdmission << ',' << row.doctor << ','
-			<< row.hospital << ',' << row.insuranceProvider << ',' << row.billingAmount << ','
-			<< row.roomNumber << ',' << row.admissionType << ',' << row.dischargeDate << ','
-			<< row.medication << ',' << row.testResults;
-		return os;
-	}
+    friend ostream& operator<<(ostream& os, RowEntry& row)
+    {
+        for (int i = 0; i < row.cells.getCurr(); ++i)
+        {
+            if (i > 0) os << ',';
+            os << row.cells[i];
+        }
+        return os;
+    }
 
-	//reading
-    friend istream& operator>>(istream& is, RowEntry& row) {
-        char delimiter;
-        getline(is, row.name, ',');
-        is >> row.age >> delimiter;
-        getline(is, row.gender, ',');
-        getline(is, row.bloodType, ',');
-        getline(is, row.medicalCondition, ',');
-        getline(is, row.dateOfAdmission, ',');
-        getline(is, row.doctor, ',');
-        getline(is, row.hospital, ',');
-        getline(is, row.insuranceProvider, ',');
-        is >> row.billingAmount >> delimiter;
-        is >> row.roomNumber >> delimiter;
-        getline(is, row.admissionType, ',');
-        getline(is, row.dischargeDate, ',');
-        getline(is, row.medication, ',');
-        getline(is, row.testResults);
+    friend istream& operator>>(istream& is, RowEntry& row)
+    {
+        row.cells.clear();
+        String line;
+        getline(is, line);
+        if (!(!line))
+        {
+            int index = 0;
+            while (index < line.getSize())
+            {
+                row.cells.push_back(parseField(line, index));
+            }
+        }
         return is;
+    }
+
+    static String parseField(String& row, int& index)
+    {
+        String field;
+        bool quoted = false;
+
+        if (row[index] == '"')
+        {
+            quoted = true;
+            ++index;
+        }
+
+        while (index < row.getSize())
+        {
+            if (quoted)
+            {
+                if (row[index] == '"')
+                {
+                    ++index;
+                    if (index < row.getSize() && row[index] == ',')
+                    {
+                        ++index;
+                    }
+                    break;
+                }
+                else
+                {
+                    if (isAlphabet(row[index]))
+                        field += convertToUppercase(row[index++]);
+                    else
+                        field += row[index++];
+                }
+            }
+            else
+            {
+                if (row[index] == ',')
+                {
+                    ++index;
+                    break;
+                }
+                else
+                {
+                    if (isAlphabet(row[index]))
+                        field += convertToUppercase(row[index++]);
+                    else
+                        field += row[index++];
+                }
+            }
+        }
+
+        return field;
+    }
+
+    void readRow(long long rowIndex, String& row)
+    {
+        this->rowIndex = rowIndex;
+        cells.clear();
+        int index = 0;
+        while (index < row.getSize())
+        {
+            cells.push_back(parseField(row, index));
+        }
     }
 };
