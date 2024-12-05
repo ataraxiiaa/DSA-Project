@@ -72,15 +72,13 @@ private:
 	};
 
 	// ===================================== AVL functions ==========================================
-	filesystem::path rootPath;
-	filesystem::path folderPath;
-
+	
 	//generate a filePath based on the value of a node
 	template<class T>
 	filesystem::path generateFilePath(const T& value)
 	{
 		// Construct the file path
-		filesystem::path filePath = folderPath;
+		filesystem::path filePath = folderPath / "NODES";
 		filePath /= to_string(value);
 		filePath += ".txt";
 		return filePath;
@@ -446,12 +444,19 @@ private:
 		inorderPrint(node.left, depth + 1);
 	}
 public:
+
+
+	filesystem::path rootPath;
+	filesystem::path folderPath;
+
 	MerkleTree(filesystem::path folderPath, filesystem::path rootPath = "NULL") : folderPath(folderPath), rootPath(rootPath)
 	{
-		this->folderPath /= "MerkleTree";
+		this->folderPath /= "MerkleTree" ;
 		if (!filesystem::exists(this->folderPath))
 		{
 			filesystem::create_directories(this->folderPath);
+			filesystem::path nodesPath = this->folderPath / "NODES";
+			filesystem::create_directories(nodesPath);
 		}
 		if (rootPath != "NULL")
 		{
@@ -476,17 +481,19 @@ public:
 	}
 
 	//saves path of root into a file
-	void saveRootToFile()
+	void saveDataToFile()
 	{
 		ofstream file;
 		filesystem::path path = folderPath;
-		path += "\\ROOT.txt";
+		path += "\\MERKLE_DATA.txt";
 		file.open(path);
 		if (!file.is_open())
-			throw runtime_error("Cannot open file: \'MERKLE_Root.txt\' for writing.");
-		file << rootPath << endl;
+			throw runtime_error("Cannot open file: \'MERKLE_DATA.txt\' for writing.");
+		file << rootPath << '\n';
+		file << folderPath << '\n';
 		file.close();
 	}
+
 };
 
 

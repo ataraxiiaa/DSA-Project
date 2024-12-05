@@ -105,14 +105,12 @@ private:
 	};
 
 // ===================================== AVL functions ==========================================
-	filesystem::path rootPath;
-	filesystem::path folderPath;
-
+	
 	//generate a filePath based on the value of a node
 	filesystem::path generateFilePath(const T& value)
 	{
 		// Construct the file path
-		filesystem::path filePath = folderPath;
+		filesystem::path filePath = folderPath / "NODES";
 		if constexpr (is_same<T, String>::value)
 		{
 			filePath /= value.getData();
@@ -513,12 +511,17 @@ private:
 	}
 
 public:
-	AVL(filesystem::path folderPath, filesystem::path rootPath = "NULL") : folderPath(folderPath), rootPath(rootPath)
+
+	AVL(filesystem::path folderPath, filesystem::path rootPath = "NULL") 
 	{
+		this->folderPath = folderPath;
+		this->rootPath = rootPath;
 		this->folderPath /= "AVL";
 		if (!filesystem::exists(this->folderPath))
 		{
 			filesystem::create_directories(this->folderPath);
+			filesystem::path nodesPath = this->folderPath / "NODES";
+			filesystem::create_directories(nodesPath);
 		}
 		if (rootPath != "NULL")
 		{
@@ -543,15 +546,16 @@ public:
 	}
 
 	//saves path of root into a file
-	void saveRootToFile()
+	void saveDataToFile()
 	{
 		ofstream file;
 		filesystem::path path = folderPath;
-		path += "\\ROOT.txt";
+		path += "\\AVL_DATA.txt";
 		file.open(path);
 		if (!file.is_open())
-			throw runtime_error("Cannot open file: \'AVL_Root.txt\' for writing.");
-		file << rootPath << endl;
+			throw runtime_error("Cannot open file: \'AVL_DATA.txt\' for writing.");
+		file << rootPath << '\n';
+		file << folderPath << '\n';
 		file.close();
 	}
 

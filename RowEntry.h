@@ -64,6 +64,11 @@ struct RowEntry
                 {
                     if (isAlphabet(row[index]))
                         field += convertToUppercase(row[index++]);
+                    else if (row[index] == '/')
+                    {
+                        field += '-';
+                        index++;
+                    }
                     else
                         field += row[index++];
                 }
@@ -79,6 +84,11 @@ struct RowEntry
                 {
                     if (isAlphabet(row[index]))
                         field += convertToUppercase(row[index++]);
+                    else if (row[index] == '/')
+                    {
+                        field += '-';
+                        index++;
+                    }
                     else
                         field += row[index++];
                 }
