@@ -5,14 +5,31 @@
 #include "ParentTree.h"
 #include"AVL.h"
 #include"RedBlackTree.h"
+#include"MerkleTree.h"
+#include "RowEntry.h"
 #include<memory>
 using namespace std;
 
 class GitLite
 {
+private:
+	filesystem::path repoPath;
+	filesystem::path CSVPath;
+	int colNumber;
+	filesystem::path currentBranch;
+	Vector<filesystem::path> branches;
+	MerkleTree* currentMerkle;
+	ParentTree<String>* currentTree;
+
+
 public:
-	GitLite(): colNumber(-1), tree(nullptr)
+	GitLite(): colNumber(-1), currentMerkle(nullptr), currentTree(nullptr)
 	{}
+	~GitLite()
+	{
+		if (currentMerkle)
+			delete currentMerkle;
+	}
 	void initRepo()
 	{
 		//create repo folder
@@ -20,6 +37,10 @@ public:
 		cin >> repoPath;
 		if (!exists(repoPath))
 			create_directory(repoPath);
+		else
+		{
+
+		}
 
 		//store CSV path
 		cout << "Enter CSV file path: ";
@@ -87,11 +108,11 @@ public:
 			cout << "Invalid index, enter again: ";
 			cin >> colNumber;
 		}
-		
+
 
 		if (treeType == 1)//AVL
 		{
-			
+			currentTree = new AVL<String>(currentBranch);
 		}
 		else if (treeType == 2)//RedBlack
 		{
@@ -102,16 +123,25 @@ public:
 
 		}
 
-
-		
+		//create MerkleTree
+		currentMerkle = new MerkleTree(currentBranch);
+		String rowString;
+		long long rowIndex = 0;
+		while (true)
+		{
+			getline(CSV, rowString);
+			if (rowString[0] == ',' || !rowString)
+				break;
+			cout << rowIndex << '\n';
+			RowEntry rowData;
+			rowData.readRow(rowIndex, rowString);
+			currentMerkle->insert(rowIndex, rowData);			//insert with index in merkle
+			currentTree->insert(rowData.cells[colNumber], rowIndex);	//insert data and index in tree
+			rowIndex++;
+		}
+		CSV.close();
+		currentMerkle->print();
+		currentTree->print();
 	}
-
-private:
-	filesystem::path repoPath;
-	filesystem::path CSVPath;
-	ParentTree* tree;
-	int colNumber;
-	filesystem::path currentBranch;
-	Vector<filesystem::path> branches;
 
 };

@@ -2,6 +2,7 @@
 #include<iostream>
 #include "String.h"
 #include"ParentTree.h"
+#include "Vector.h"
 #include <fstream>
 #include<filesystem>
 using namespace std;
@@ -20,6 +21,7 @@ private:
 		T data;
 		int height;
 		int frequency;
+		Vector<long long> rowIndexes;
 		String hash;
 		filesystem::path left;	 //left child path
 		filesystem::path right;	 //right child path
@@ -41,6 +43,13 @@ private:
 			file << this->data << '\n';
 			file << this->height << '\n';
 			file << this->frequency << '\n';
+			for (int a = 0; a < this->frequency; a++)
+			{
+				if (a > 0)
+					file << ' ';
+				file << this->rowIndexes[a];
+			}
+			file << '\n';
 			file << this->hash << '\n';
 			file << this->left << '\n';
 			file << this->right << '\n';
@@ -77,6 +86,14 @@ private:
 				file >> node.frequency;
 				file.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
 			}
+			char delim;
+			long long index;
+			for (int a = 0; a < node.frequency; a++)
+			{
+				file >> index;
+				node.rowIndexes.push_back(index);
+			}
+			file.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
 			getline(file, node.hash);
 			file >> node.left;
 			file >> node.right;
@@ -288,13 +305,14 @@ private:
 	}
 
 	//NOTE: updates path sent as parameter
-	void helperInsert(filesystem::path& path, const filesystem::path& parentPath, const T& data)
+	void helperInsert(filesystem::path& path, const filesystem::path& parentPath, const T& data, const long long& rowIndex)
 	{
 		if (path== "NULL")
 		{
 			filesystem::path newFilePath = generateFilePath(data);
 			Node newNode(data);
 			newNode.parent = parentPath;
+			newNode.rowIndexes.push_back(rowIndex);
 			path = newFilePath;
 			newNode.updateFile(newFilePath);
 			return;
@@ -304,15 +322,16 @@ private:
 			Node current = Node::readFile(path);
 			if (data < current.data)
 			{
-				helperInsert(current.left, path, data);
+				helperInsert(current.left, path, data, rowIndex);
 			}
 			else if (data > current.data)
 			{
-				helperInsert(current.right, path, data);
+				helperInsert(current.right, path, data, rowIndex);
 			}
 			else if(data==current.data)
 			{
 				current.frequency++;
+				current.rowIndexes.push_back(rowIndex);
 				current.updateFile(path);
 				return;
 			}
@@ -496,10 +515,10 @@ private:
 public:
 	AVL(filesystem::path folderPath, filesystem::path rootPath = "NULL") : folderPath(folderPath), rootPath(rootPath)
 	{
-		folderPath /= "AVL";
-		if (!filesystem::exists(folderPath))
+		this->folderPath /= "AVL";
+		if (!filesystem::exists(this->folderPath))
 		{
-			filesystem::create_directories(folderPath);
+			filesystem::create_directories(this->folderPath);
 		}
 		if (rootPath != "NULL")
 		{
@@ -508,9 +527,9 @@ public:
 		}
 	}
 
-	void insert(const T& data) override
+	void insert(const T& data, const long long& rowIndex) override
 	{
-		helperInsert(rootPath,"NULL", data);
+		helperInsert(rootPath,"NULL", data, rowIndex);
 	}
 	void remove(const T& data) override
 	{
