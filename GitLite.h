@@ -85,7 +85,7 @@ private:
 		branches.clear();
 		for (int i = 0; i < branchCount; i++)
 		{
-			path currBranch;
+			filesystem::path currBranch;
 			file >> currBranch;
 			branches.push_back(currBranch);
 		}
@@ -95,9 +95,9 @@ private:
 		file.ignore(numeric_limits<streamsize>::max(), '\n'); 
 		if (hasMerkle == 1)
 		{
-			path merkleRoot;
+			filesystem::path merkleRoot;
 			file >> merkleRoot;
-			path merkleFolder;
+			filesystem::path merkleFolder;
 			file >> merkleFolder;
 			currentMerkle = new MerkleTree(merkleFolder,merkleRoot);
 		}
@@ -113,9 +113,9 @@ private:
 
 		if (hasTree == 1) 
 		{
-			path treeRoot;
+			filesystem::path treeRoot;
 			file >> treeRoot;
-			path treeFolder;
+			filesystem::path treeFolder;
 			file >> treeFolder;
 
 			if (treeType == 1)//AVl
