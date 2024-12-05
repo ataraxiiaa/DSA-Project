@@ -12,6 +12,12 @@ bool isAlphabet(char c)
 {
 	return ((c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'z'));
 }
+char convertToUppercase(char ch)
+{
+	if (!(ch >= 'a' && ch <= 'z'))
+		return ch;
+	return ch - 32;
+}
 
 class String {
 	char* data;
