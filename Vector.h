@@ -23,7 +23,7 @@ public:
 	{
 		this->maxSize = copy.maxSize;
 		this->currSize = copy.currSize;
-		this->ptr = new T[maxSize];
+		this->ptr = new Type[maxSize];
 		for (int a = 0; a < currSize; a++)
 		{
 			this->ptr[a] = copy.ptr[a];
@@ -67,6 +67,14 @@ public:
 	}
 	Type& back() {
 		return ptr[currSize - 1];
+	}
+
+	void clear()
+	{
+		delete[] ptr;
+		currSize = 0;
+		maxSize = 5;
+		ptr = new Type[maxSize];
 	}
 };
 
