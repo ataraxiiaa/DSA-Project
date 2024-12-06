@@ -92,6 +92,23 @@ public:
 		}
 		ptr[i] = data;
 	}
+	int search(const Type& value) const {
+		for (int i = 0; i < currSize; ++i) {
+			if (this->ptr[i] == value) {
+				return i;
+			}
+		}
+		return -1;
+	}
+	void removeAt(int index) {
+		if (index < 0 || index >= currSize) {
+			return;
+		}
+		for (int i = index; i < currSize - 1; i++) {
+			ptr[i] = ptr[i + 1];
+		}
+		currSize--;
+	}
 	Type& back() {
 		return ptr[currSize - 1];
 	}
