@@ -70,7 +70,6 @@ private:
 			return node;
 		}
 	};
-
 	// ===================================== AVL functions ==========================================
 	
 	//generate a filePath based on the value of a node
@@ -264,31 +263,35 @@ private:
 	}
 
 	//NOTE: updates path sent as parameter
-	void helperInsert(filesystem::path& path, const filesystem::path& parentPath, const long long& index, const RowEntry& row)
+	//returns the currently inserted index
+	long long helperInsert(filesystem::path& path, const filesystem::path& parentPath, const RowEntry& row)
 	{
 		if (path == "NULL")
 		{
-			filesystem::path newFilePath = generateFilePath(index);
-			Node newNode(index,row);
+			filesystem::path newFilePath = generateFilePath(staticCounter);
+			Node newNode(staticCounter,row);
 			newNode.parent = parentPath;
 			path = newFilePath;
 			newNode.updateFile(newFilePath);
-			return;
+			long long temp = staticCounter;
+			staticCounter++;
+			return temp;
 		}
 		else
 		{
+			long long temp;
 			Node current = Node::readFile(path);
-			if (index < current.index)
+			if (staticCounter < current.index)
 			{
-				helperInsert(current.left, path, index,row);
+				temp = helperInsert(current.left, path, row);
 			}
-			else if (index > current.index)
+			else if (staticCounter > current.index)
 			{
-				helperInsert(current.right, path, index,row);
+				temp = helperInsert(current.right, path, row);
 			}
-			else if (index == current.index)
+			else if (staticCounter == current.index)
 			{
-				return;
+				return staticCounter;
 			}
 			current.updateFile(path);
 			updateNodeHeight(path);
@@ -298,6 +301,7 @@ private:
 			{
 				balanceNode(path);
 			}
+			return temp;
 		}
 	}
 
@@ -443,15 +447,20 @@ private:
 		cout << node.index << endl;
 		inorderPrint(node.left, depth + 1);
 	}
+
+	long long staticCounter = 0;
 public:
 
 
 	filesystem::path rootPath;
 	filesystem::path folderPath;
 
+	////////////////////////////////// CONSTRUCTORS /////////////////////////////////////////
+	MerkleTree()
+	{}
 	MerkleTree(filesystem::path folderPath) : folderPath(folderPath), rootPath("NULL")
 	{
-		this->folderPath /= "MerkleTree" ;
+		this->folderPath /= "MERKLETREE" ;
 		if (!filesystem::exists(this->folderPath))
 		{
 			filesystem::create_directories(this->folderPath);
@@ -464,10 +473,22 @@ public:
 		if (!filesystem::exists(this->folderPath) || (!filesystem::exists(this->rootPath)))
 			throw runtime_error("Path does not exist.");
 	}
-
-	void insert(const long long& index, const RowEntry& row)
+	MerkleTree(bool loadTreeFromBranch, path branchPath)
 	{
-		helperInsert(rootPath, "NULL", index,row);
+		if (loadTreeFromBranch)
+		{
+			loadFromBranch(branchPath);
+		}
+	}
+	
+	//////////////////////////////////UI/////////////////////////////////////////
+	long long getCounter()
+	{
+		return this->staticCounter;
+	}
+	long long insert(const RowEntry& row)
+	{
+		return helperInsert(rootPath, "NULL", row);
 	}
 	void remove(const long long& index)
 	{
@@ -491,8 +512,26 @@ public:
 			throw runtime_error("Cannot open file: \'MERKLE_DATA.txt\' for writing.");
 		file << rootPath << '\n';
 		file << folderPath << '\n';
+		file << staticCounter << '\n';
 		file.close();
 	}
+	void loadFromBranch(path branchPath)
+	{
+		branchPath /= "MERKLETREE";
+		branchPath /= "MERKLE_DATA.txt";
+		if (!exists(branchPath))
+			throw runtime_error("File to load tree from doesnt exist.");
+		ifstream file(branchPath);
+		if (!file.is_open())
+			throw runtime_error("Cannot open file: \'MERKLE_DATA.txt\' for reading.");
+		file >> rootPath;
+		file >> folderPath;
+		file >> staticCounter;
+		file.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+		file.close();
+	}
+
+
 
 };
 

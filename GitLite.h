@@ -21,126 +21,6 @@ private:
 	MerkleTree* currentMerkle;
 	ParentTree<String>* currentTree;
 
-	void saveRepoToFile()
-	{
-		filesystem::path repoFilePath = repoPath / "REPO_DATA.txt";
-		ofstream file(repoFilePath);
-		if (!file.is_open())
-			throw runtime_error("Cannot open repo data file for writing.");
-
-		file << repoPath<<'\n';
-		file << CSVPath << '\n';
-		file << colNumber << '\n';
-		file << treeType << '\n';
-		file << currentBranch << '\n';
-		file << branches.getCurr() << '\n';
-		for (int a = 0; a < branches.getCurr(); a++)
-		{
-			file << branches[a] << '\n';
-		}
-		if (currentMerkle)
-		{
-			file << 1 << '\n';
-			file << currentMerkle->rootPath << '\n';
-			file << currentMerkle->folderPath << '\n';
-		}
-		else
-		{
-			file << 0 << '\n';
-		}
-		if (currentTree)
-		{
-			file << 1 << '\n';
-			file << currentTree->rootPath << '\n';
-			file << currentTree->folderPath << '\n';
-		}
-		else
-		{
-			file << 0 << '\n';
-		}
-	}
-	void loadRepoFromFile()
-	{
-		filesystem::path repoFilePath = repoPath / "REPO_DATA.txt";
-		ifstream file(repoFilePath);
-		if (!file.is_open()) {
-			throw runtime_error("Cannot open repo data file for reading.");
-		}
-
-		String line;
-
-		file>> repoPath;
-		file >> CSVPath;
-
-		file >> colNumber;
-		file.ignore(numeric_limits<streamsize>::max(), '\n');
-		file >> treeType;
-		file.ignore(numeric_limits<streamsize>::max(), '\n');
-
-		file >> currentBranch;
-		int branchCount;
-		file >> branchCount;
-		file.ignore(numeric_limits<streamsize>::max(), '\n');
-
-		branches.clear();
-		for (int i = 0; i < branchCount; i++)
-		{
-			filesystem::path currBranch;
-			file >> currBranch;
-			branches.push_back(currBranch);
-		}
-
-		int hasMerkle;
-		file >> hasMerkle;
-		file.ignore(numeric_limits<streamsize>::max(), '\n'); 
-		if (hasMerkle == 1)
-		{
-			filesystem::path merkleRoot;
-			file >> merkleRoot;
-			filesystem::path merkleFolder;
-			file >> merkleFolder;
-			currentMerkle = new MerkleTree(merkleFolder,merkleRoot);
-		}
-		else 
-		{
-			currentMerkle = nullptr;
-		}
-
-
-		int hasTree;
-		file >> hasTree;
-		file.ignore(numeric_limits<streamsize>::max(), '\n');
-
-		if (hasTree == 1) 
-		{
-			filesystem::path treeRoot;
-			file >> treeRoot;
-			filesystem::path treeFolder;
-			file >> treeFolder;
-
-			if (treeType == 1)//AVl
-			{
-				currentTree = new AVL<String>(treeFolder, treeRoot);
-			}
-			else if (treeType == 2)//RB
-			{
-				currentTree = new RedBlackTree<String>(treeFolder, treeRoot);
-			}
-			else if (treeType == 3)//B
-			{
-
-			}
-
-		}
-		else 
-		{
-			currentTree = nullptr;
-		}
-
-		file.close();
-	}
-
-
 public:
 	GitLite(): colNumber(-1), currentMerkle(nullptr), currentTree(nullptr), treeType(-1)
 	{}
@@ -148,9 +28,18 @@ public:
 	{
 		if (currentMerkle)
 			delete currentMerkle;
+		if (currentTree)
+			delete currentTree;
 	}
 	void initRepo()
 	{
+		currentMerkle = nullptr;
+		currentTree = nullptr;
+		colNumber = -1;
+		treeType = -1;
+		branches.clear();
+		currentBranch = "";
+
 		//create repo folder
 		cout << "Enter Repository name: ";
 		cin >> repoPath;
@@ -241,18 +130,19 @@ public:
 
 			}
 			String rowString;
-			long long rowIndex = 0;
+			long long rowIndex;
 			while (true)
 			{
 				getline(CSV, rowString);
 				if (rowString[0] == ',' || !rowString)
 					break;
+
+				rowIndex = currentMerkle->getCounter();
 				cout << rowIndex << '\n';
 				RowEntry rowData;
 				rowData.readRow(rowIndex, rowString);
-				currentMerkle->insert(rowIndex, rowData);					//insert with index in merkle
+				currentMerkle->insert(rowData);					//insert with index in merkle
 				currentTree->insert(rowData.cells[colNumber], rowIndex);	//insert data and index in tree
-				rowIndex++;
 			}
 			CSV.close();
 			currentMerkle->saveDataToFile();
@@ -272,7 +162,198 @@ public:
 		if (currentTree)
 			this->currentTree->print();
 		else
-			cout << "No tree loaded." << endl;
+			cout << "Error: No tree loaded." << endl;
+	}
+	void printCurrentBranch()
+	{
+		if (currentBranch == "")
+			cout << "Error: No branch loaded." << endl;
+		else
+			cout << "Current branch: " << currentBranch << endl;
+	}
+	void printAllBranches()
+	{
+		if (branches.getCurr() == 0)
+		{
+			cout << "Error: No branch exists." << endl;
+			return;
+		}
+		for (int a = 0; a < branches.getCurr(); a++)
+		{
+			cout << "- " << branches[a] << endl;
+		}
+	}
+	void createBranch()
+	{
+		path branchName;
+		cout << "Enter branch name: ";
+		cin >> branchName;
+		path branchPath = repoPath / branchName;
+		for (int a = 0; a < branches.getCurr(); a++)
+		{
+			if (branches[a] == branchPath)
+			{
+				cout << "Error: Branch " << branchName << " already exists." << endl;
+				return;
+			}
+		}
+		branches.push_back(branchPath);
+		filesystem::copy(currentBranch, branchPath, filesystem::copy_options::recursive);
+		saveRepoToFile();
+		cout << "Branch: " << branchName << " created."<<endl;
+	}
+
+	void checkout()
+	{
+		path branchName;
+		cout << "Enter branch name: ";
+		cin >> branchName;
+		path branchPath = repoPath / branchName;
+		for (int a = 0; a < branches.getCurr(); a++)
+		{
+			if (branches[a] == branchPath)
+			{
+				currentBranch = branches[a];
+				cout << "Switched to branch: " << branchName  << endl;
+
+				//switch to target branch's trees
+				if (currentMerkle)
+					delete currentMerkle;
+				if (currentTree)
+					delete currentTree;
+
+				currentMerkle = new MerkleTree(true, currentBranch);
+				if (treeType == 1)//AVL
+				{
+					currentTree = new AVL<String>(true, currentBranch);
+				}
+				else if (treeType == 2)//RB
+				{
+					currentTree = new RedBlackTree<String>(true, currentBranch);
+				}
+				else if (treeType == 3)//BTree
+				{
+
+				}
+				saveRepoToFile();
+				return;
+			}
+		}
+		cout << "Error: branch does not exist." << endl;
+	}
+
+	void deleteBranch()
+	{
+		path branchName;
+		cout << "Enter branch name: ";
+		cin >> branchName;
+		path branchPath = repoPath / branchName;
+		if (currentBranch == branchPath)
+		{
+			cout << "Error: Attempting to delete current branch. Checkout to another branch first." << endl;
+			return;
+		}
+		else
+		{
+			for (int a = 0; a < branches.getCurr(); a++)
+			{
+				if (branches[a] == branchPath)
+				{
+					branches.Destroy(a);
+					filesystem::remove_all(branchPath);
+					cout << "Branch: " << branchPath << " removed." << endl;
+					saveRepoToFile();
+					return;
+				}
+			}
+			cout << "Error: branch not found." << endl;
+		}
+	}
+
+	void saveRepoToFile()
+	{
+		filesystem::path repoFilePath = repoPath / "REPO_DATA.txt";
+		ofstream file(repoFilePath);
+		if (!file.is_open())
+			throw runtime_error("Cannot open repo data file for writing.");
+
+		file << repoPath << '\n';
+		file << CSVPath << '\n';
+		file << colNumber << '\n';
+		file << treeType << '\n';
+		file << currentBranch << '\n';
+		file << branches.getCurr() << '\n';
+		for (int a = 0; a < branches.getCurr(); a++)
+		{
+			file << branches[a] << '\n';
+		}
+	}
+	void loadRepoFromFile(path filePath="NULL")
+	{
+		filesystem::path repoFilePath;
+		if (filePath == "NULL")
+		{
+			repoFilePath = repoPath / "REPO_DATA.txt";
+		}
+		else
+		{
+			repoFilePath = filePath;
+		}
+		ifstream file(repoFilePath);
+		if (!file.is_open()) {
+			throw runtime_error("Cannot open repo data file for reading.");
+		}
+
+		String line;
+
+		file >> repoPath;
+		file >> CSVPath;
+
+		file >> colNumber;
+		file.ignore(numeric_limits<streamsize>::max(), '\n');
+		file >> treeType;
+		file.ignore(numeric_limits<streamsize>::max(), '\n');
+
+		file >> currentBranch;
+		int branchCount;
+		file >> branchCount;
+		file.ignore(numeric_limits<streamsize>::max(), '\n');
+
+		branches.clear();
+		for (int i = 0; i < branchCount; i++)
+		{
+			filesystem::path currBranch;
+			file >> currBranch;
+			branches.push_back(currBranch);
+		}
+
+		//load trees from branch
+		if (currentMerkle)
+			delete currentMerkle;
+		currentMerkle = new MerkleTree(true, currentBranch);
+
+		if (currentTree)
+			delete currentTree;
+		if (treeType == 1)//AVL
+		{
+			currentTree = new AVL<String>(true, currentBranch);
+		}
+		else if (treeType == 2)//RB
+		{
+			currentTree = new RedBlackTree<String>(true, currentBranch);
+		}
+		else if (treeType == 3)//BTree
+		{
+
+		}
+
+
+		file.close();
+	}
+	path getRepoDataFile()
+	{
+		filesystem::path repoFilePath = repoPath / "REPO_DATA.txt";
+		return repoFilePath;
 	}
 
 };

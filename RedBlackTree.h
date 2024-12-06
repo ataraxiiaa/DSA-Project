@@ -675,11 +675,13 @@ class RedBlackTree: public ParentTree<T> {
 	
 public:
 	filesystem::path Root()const { return rootPath; }
+	RedBlackTree()
+	{}
 	RedBlackTree(filesystem::path folderPath)
 	{
 		this->folderPath = folderPath;
 		this->rootPath = "NULL";
-		this->folderPath /= "REDBLACK";
+		this->folderPath /= "TREE";
 		if (!filesystem::exists(this->folderPath))
 		{
 			filesystem::create_directories(this->folderPath);
@@ -693,6 +695,14 @@ public:
 		this->rootPath = rootPath;
 		if (!filesystem::exists(this->folderPath) || (!filesystem::exists(this->rootPath)))
 			throw runtime_error("Path does not exist.");
+	}
+
+	RedBlackTree(bool loadTreeFromBranch, filesystem::path branchPath)
+	{
+		if (loadTreeFromBranch)
+		{
+			loadFromBranch(branchPath);
+		}
 	}
 	//===================================== UI Functions ==========================================
 	void insert(const T& value, const long long& rowIndex) {
@@ -732,7 +742,7 @@ public:
 	{
 		ofstream file;
 		filesystem::path path = folderPath;
-		path += "\\RB_DATA.txt";
+		path += "\\TREE_DATA.txt";
 		file.open(path);
 		if (!file.is_open())
 			throw runtime_error("Cannot open file: \'RB_DATA.txt\' for writing.");
@@ -740,5 +750,20 @@ public:
 		file << folderPath << '\n';
 		file.close();
 	}
+	void loadFromBranch(path branchPath)
+	{
+		branchPath /= "TREE";
+		branchPath /= "TREE_DATA.txt";
+		if (!exists(branchPath))
+			throw runtime_error("File to load tree from doesnt exist.");
+		ifstream file(branchPath);
+		if (!file.is_open())
+			throw runtime_error("Cannot open file: \'RB_DATA.txt\' for reading.");
+		file >> rootPath;
+		file >> folderPath;
+		file.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+		file.close();
+	}
+
 
 };

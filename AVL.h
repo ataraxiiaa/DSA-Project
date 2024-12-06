@@ -526,11 +526,13 @@ private:
 
 public:
 
+	AVL()
+	{}
 	AVL(filesystem::path folderPath) 
 	{
 		this->folderPath = folderPath;
 		this->rootPath = "NULL";
-		this->folderPath /= "AVL";
+		this->folderPath /= "TREE";
 		if (!filesystem::exists(this->folderPath))
 		{
 			filesystem::create_directories(this->folderPath);
@@ -546,6 +548,14 @@ public:
 			throw runtime_error("Path does not exist.");
 	}
 
+	AVL(bool loadTreeFromBranch, filesystem::path branchPath)
+	{
+		if (loadTreeFromBranch)
+		{
+			loadFromBranch(branchPath);
+		}
+	}
+	
 	void insert(const T& data, const long long& rowIndex) override
 	{
 		helperInsert(rootPath,"NULL", data, rowIndex);
@@ -566,7 +576,7 @@ public:
 	{
 		ofstream file;
 		filesystem::path path = folderPath;
-		path += "\\AVL_DATA.txt";
+		path += "\\TREE_DATA.txt";
 		file.open(path);
 		if (!file.is_open())
 			throw runtime_error("Cannot open file: \'AVL_DATA.txt\' for writing.");
@@ -574,6 +584,21 @@ public:
 		file << folderPath << '\n';
 		file.close();
 	}
+	void loadFromBranch(filesystem::path branchPath)
+	{
+		branchPath /= "TREE";
+		branchPath /= "TREE_DATA.txt";
+		if (!exists(branchPath))
+			throw runtime_error("File to load tree from doesnt exist.");
+		ifstream file(branchPath);
+		if (!file.is_open())
+			throw runtime_error("Cannot open file: \'AVL_DATA.txt\' for reading.");
+		file >> rootPath;
+		file >> folderPath;
+		file.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+		file.close();
+	}
+
 
 	void displayFrequency()
 	{
