@@ -199,6 +199,14 @@ public:
 		}
 		branches.push_back(branchPath);
 		filesystem::copy(currentBranch, branchPath, filesystem::copy_options::recursive);
+
+		//update branch names in new trees' data files
+		path newMerkleFilePath = branchPath / "MERKLETREE" / "MERKLE_DATA.txt";
+		MerkleTree::updateNewBranch(newMerkleFilePath, currentBranch.filename(), branchPath.filename());
+
+		path newTreePath = branchPath / "TREE" / "TREE_DATA.txt";
+		ParentTree<String>::updateNewBranch(newTreePath, currentBranch.filename(), branchPath.filename());
+
 		saveRepoToFile();
 		cout << "Branch: " << branchName << " created."<<endl;
 	}

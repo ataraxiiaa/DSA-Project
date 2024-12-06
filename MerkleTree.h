@@ -82,7 +82,7 @@ private:
 
 			filesystem::path temp;
 
-			
+
 			file>>temp;
 			if (temp == "NULL")
 				node.left = "NULL";
@@ -114,6 +114,7 @@ private:
 			return node;
 		}
 	};
+
 	// =====================================  functions ==========================================
 	
 	//generate a filePath based on the value of a node
@@ -568,11 +569,72 @@ public:
 		file >> rootPath;
 		file >> folderPath;
 		file >> staticCounter;
+		file.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
 		file >> this->branchPath;
 		file.close();
 	}
 
+	static void updateNewBranch(const path& targetFile, const path& oldBranch, const path& newBranch)
+	{
+		ifstream file(targetFile);
+		if (!file.is_open())
+			throw runtime_error("Cannot open file: \'MERKLE_DATA.txt\' for reading.");
 
+		path tempRootPath;
+		path tempFolderPath;
+		long long tempStaticCounter;
+		path tempBranchPath;
+		
+		file >> tempRootPath;
+		file >> tempFolderPath;
+		file >> tempStaticCounter;
+		file.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+		file >> tempBranchPath;
+
+		file.close();
+
+		ofstream rewritefile(targetFile);
+		if (!rewritefile.is_open())
+			throw runtime_error("Cannot open file: \'MERKLE_DATA.txt\' for writing.");
+
+		path newPath;
+
+		newPath.clear();
+		for (const auto& part : tempRootPath) {
+			if (part == oldBranch) {
+				newPath /= newBranch;
+			}
+			else {
+				newPath /= part;
+			}
+		}
+		rewritefile << newPath<<'\n';
+
+		newPath.clear();
+		for (const auto& part : tempFolderPath) {
+			if (part == oldBranch) {
+				newPath /= newBranch;
+			}
+			else {
+				newPath /= part;
+			}
+		}
+		rewritefile << newPath << '\n';
+		rewritefile << tempStaticCounter << '\n';
+
+		newPath.clear();
+		for (const auto& part : tempBranchPath) {
+			if (part == oldBranch) {
+				newPath /= newBranch;
+			}
+			else {
+				newPath /= part;
+			}
+		}
+		rewritefile << newPath << '\n';
+
+		rewritefile.close();
+	}
 
 };
 

@@ -25,7 +25,7 @@ private:
 		String hash;
 		filesystem::path left;	 //left child path
 		filesystem::path right;	 //right child path
-		filesystem::path parent;	 //parent path
+		filesystem::path parent; //parent path
 
 		Node(T data=T()): data(data), height(0), frequency(1), hash("InsertHashHere"), left("NULL"), right("NULL"), parent("NULL")
 		{}
@@ -51,14 +51,14 @@ private:
 			}
 			file << '\n';
 			file << this->hash << '\n';
-			file << this->left << '\n';
-			file << this->right << '\n';
-			file << this->parent << '\n';
+			file << (this->left == "NULL" ? "NULL" : makeRelative(this->left)) << '\n';
+			file << (this->right == "NULL" ? "NULL" : makeRelative(this->right)) << '\n';
+			file << (this->parent == "NULL" ? "NULL" : makeRelative(this->parent)) << '\n';
 
 			file.close();
 		}
 
-		static Node readFile(const filesystem::path& path)
+		static Node readFile(const filesystem::path& path, const AVL& merc)
 		{
 			if(path== "NULL")
 				throw runtime_error("Attempting to access empty path.");
@@ -95,9 +95,34 @@ private:
 			}
 			file.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
 			getline(file, node.hash);
-			file >> node.left;
-			file >> node.right;
-			file >> node.parent;
+			filesystem::path temp;
+
+			file >> temp;
+			if (temp == "NULL")
+				node.left = "NULL";
+			else
+			{
+				node.left = merc.branchPath;
+				node.left /= temp;
+			}
+
+			file >> temp;
+			if (temp == "NULL")
+				node.right = "NULL";
+			else
+			{
+				node.right = merc.branchPath;
+				node.right /= temp;
+			}
+
+			file >> temp;
+			if (temp == "NULL")
+				node.parent = "NULL";
+			else
+			{
+				node.parent = merc.branchPath;
+				node.parent /= temp;
+			}
 			
 			file.close();
 			return node;
@@ -141,7 +166,7 @@ private:
 			return -1;
 		else
 		{
-			return Node::readFile(path).height;
+			return Node::readFile(path, *this).height;
 		}
 	}
 
@@ -151,7 +176,7 @@ private:
 		if (path.empty() || path == "NULL")
 			return;
 
-		Node node = Node::readFile(path);
+		Node node = Node::readFile(path, *this);
 		int leftHeight = Height(node.left);
 		int rightHeight = Height(node.right);
 
@@ -163,7 +188,7 @@ private:
 	//BF = Right - Left
 	int balanceFactor(const filesystem::path& path)
 	{
-		Node node = Node::readFile(path);
+		Node node = Node::readFile(path, *this);
 		int leftHeight = Height(node.left);
 		int rightHeight = Height(node.right);
 
@@ -176,8 +201,8 @@ private:
 	//automatically updates parent, old and new pivots
 	void rotateRight(filesystem::path& path)
 	{
-		Node mainNode = Node::readFile(path);
-		Node leftNode = Node::readFile(mainNode.left);
+		Node mainNode = Node::readFile(path, *this);
+		Node leftNode = Node::readFile(mainNode.left, *this);
 		filesystem::path leftNodePath = mainNode.left;
 		filesystem::path leftNodeKaRightPath = leftNode.right;
 
@@ -185,7 +210,7 @@ private:
 		mainNode.left = leftNodeKaRightPath;
 		if (leftNodeKaRightPath!= "NULL")
 		{
-			Node leftNodesRight_NODE = Node::readFile(leftNodeKaRightPath);
+			Node leftNodesRight_NODE = Node::readFile(leftNodeKaRightPath, *this);
 			leftNodesRight_NODE.parent = path;
 			leftNodesRight_NODE.updateFile(leftNodeKaRightPath);
 		}
@@ -206,7 +231,7 @@ private:
 		//update the parent if it exists
 		if (leftNode.parent!= "NULL")
 		{
-			Node parentNode = Node::readFile(leftNode.parent);
+			Node parentNode = Node::readFile(leftNode.parent, *this);
 			parentNode.left == path ? parentNode.left = leftNodePath : parentNode.right = leftNodePath;
 
 			parentNode.updateFile(leftNode.parent);
@@ -220,8 +245,8 @@ private:
 	//automatically updates parent, old and new pivots
 	void rotateLeft(filesystem::path& path)
 	{
-		Node mainNode = Node::readFile(path);
-		Node rightNode = Node::readFile(mainNode.right);
+		Node mainNode = Node::readFile(path, *this);
+		Node rightNode = Node::readFile(mainNode.right, *this);
 		filesystem::path rightNodePath = mainNode.right;
 		filesystem::path rightNodeKaLeftPath = rightNode.left;
 
@@ -229,7 +254,7 @@ private:
 		mainNode.right = rightNodeKaLeftPath;
 		if (rightNodeKaLeftPath!= "NULL")
 		{
-			Node rightNodesleft_NODE = Node::readFile(rightNodeKaLeftPath);
+			Node rightNodesleft_NODE = Node::readFile(rightNodeKaLeftPath, *this);
 			rightNodesleft_NODE.parent = path;
 			rightNodesleft_NODE.updateFile(rightNodeKaLeftPath);
 		}
@@ -250,7 +275,7 @@ private:
 		//update the parent if it exists
 		if (rightNode.parent!= "NULL")
 		{
-			Node parentNode = Node::readFile(rightNode.parent);
+			Node parentNode = Node::readFile(rightNode.parent, *this);
 			parentNode.left == path ? parentNode.left = rightNodePath : parentNode.right = rightNodePath;
 
 			parentNode.updateFile(rightNode.parent);
@@ -263,7 +288,7 @@ private:
 	//returns 1 if rotations occured
 	bool balanceNode(filesystem::path& path)
 	{
-		Node node = Node::readFile(path);
+		Node node = Node::readFile(path, *this);
 		int BF= balanceFactor(path);
 
 		//right heavy
@@ -317,7 +342,7 @@ private:
 		}
 		else
 		{
-			Node current = Node::readFile(path);
+			Node current = Node::readFile(path, *this);
 			if (data < current.data)
 			{
 				helperInsert(current.left, path, data, rowIndex);
@@ -354,7 +379,7 @@ private:
 			return;
 		}
 
-		Node node = Node::readFile(path);
+		Node node = Node::readFile(path, *this);
 
 		//find the element
 		if (data < node.data)
@@ -397,13 +422,13 @@ private:
 				{
 					if (node.right != "NULL")
 					{
-						Node right = Node::readFile(node.right);
+						Node right = Node::readFile(node.right, *this);
 						right.parent = node.parent;
 						right.updateFile(node.right);
 					}
 					if (node.parent != "NULL")
 					{
-						Node parent = Node::readFile(node.parent);
+						Node parent = Node::readFile(node.parent, *this);
 						parent.left == path ? parent.left = node.right : parent.right = node.right;
 						parent.updateFile(node.parent);
 						updateNodeHeight(node.parent);
@@ -418,13 +443,13 @@ private:
 				{
 					if (node.left != "NULL")
 					{
-						Node left = Node::readFile(node.left);
+						Node left = Node::readFile(node.left, *this);
 						left.parent = node.parent;
 						left.updateFile(node.left);
 					}
 					if (node.parent != "NULL")
 					{
-						Node parent = Node::readFile(node.parent);
+						Node parent = Node::readFile(node.parent, *this);
 						parent.left == path ? parent.left = node.left : parent.right = node.left;
 						parent.updateFile(node.parent);
 						updateNodeHeight(node.parent);
@@ -438,13 +463,13 @@ private:
 				else if (node.right != "NULL" && node.left != "NULL")
 				{
 					//find inorder successor
-					Node successor = Node::readFile(node.right);
+					Node successor = Node::readFile(node.right, *this);
 					filesystem::path successorPath = node.right;
 
 					while (successor.left != "NULL")
 					{
 						successorPath = successor.left;
-						successor = Node::readFile(successor.left);
+						successor = Node::readFile(successor.left, *this);
 					}
 
 					//replace nodes data with successor data
@@ -461,23 +486,23 @@ private:
 					helperRemove(node.right, successor.data, rowIndex);
 					
 					//rename the node that just got replaced and update the new path in all neighbors
-					node = Node::readFile(path);
+					node = Node::readFile(path, *this);
 					filesystem::rename(path,updatedPath);
 					if (node.parent!= "NULL")
 					{
-						Node parent = Node::readFile(node.parent);
+						Node parent = Node::readFile(node.parent, *this);
 						parent.left == path ? parent.left = updatedPath : parent.right = updatedPath;
 						parent.updateFile(node.parent);
 					}
 					if (node.left != "NULL")
 					{
-						Node left = Node::readFile(node.left);
+						Node left = Node::readFile(node.left, *this);
 						left.parent = updatedPath;
 						left.updateFile(node.left);
 					}
 					if (node.right != "NULL")
 					{
-						Node right = Node::readFile(node.right);
+						Node right = Node::readFile(node.right, *this);
 						right.parent = updatedPath;
 						right.updateFile(node.right);
 					}
@@ -504,7 +529,7 @@ private:
 			cout << "-" << endl;
 			return;
 		}
-		Node node = Node::readFile(path);
+		Node node = Node::readFile(path, *this);
 		inorderPrint(node.right, depth+1);
 		for (int a = 0; a < depth; a++)
 		{
@@ -518,7 +543,7 @@ private:
 	{
 		if (path == "NULL")
 			return;
-		Node node = Node::readFile(path);
+		Node node = Node::readFile(path, *this);
 		helperF(node.left, f);
 		f += node.frequency;
 		helperF(node.right, f);
@@ -528,9 +553,10 @@ public:
 
 	AVL()
 	{}
-	AVL(filesystem::path folderPath) 
+	AVL(filesystem::path branchPath)
 	{
-		this->folderPath = folderPath;
+		this->branchPath = branchPath;
+		this->folderPath = branchPath;
 		this->rootPath = "NULL";
 		this->folderPath /= "TREE";
 		if (!filesystem::exists(this->folderPath))
@@ -540,14 +566,6 @@ public:
 			filesystem::create_directories(nodesPath);
 		}
 	}
-	AVL(filesystem::path folderPath, filesystem::path rootPath)
-	{
-		this->folderPath = folderPath;
-		this->rootPath = rootPath;
-		if (!filesystem::exists(this->folderPath) || (!filesystem::exists(this->rootPath)))
-			throw runtime_error("Path does not exist.");
-	}
-
 	AVL(bool loadTreeFromBranch, filesystem::path branchPath)
 	{
 		if (loadTreeFromBranch)
@@ -582,6 +600,7 @@ public:
 			throw runtime_error("Cannot open file: \'AVL_DATA.txt\' for writing.");
 		file << rootPath << '\n';
 		file << folderPath << '\n';
+		file << branchPath << '\n';
 		file.close();
 	}
 	void loadFromBranch(filesystem::path branchPath)
@@ -595,7 +614,7 @@ public:
 			throw runtime_error("Cannot open file: \'AVL_DATA.txt\' for reading.");
 		file >> rootPath;
 		file >> folderPath;
-		file.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+		file >> this->branchPath;
 		file.close();
 	}
 
