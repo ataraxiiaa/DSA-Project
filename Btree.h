@@ -1,3 +1,4 @@
+#include <algorithm>
 #include <iostream>
 #include <string>
 #include <fstream>
@@ -198,9 +199,6 @@ class Btree {
                     currKeyIndex = a;
                     break;
                 }
-            }
-            if (currKeyIndex != -1) {
-                break;
             }
             currPath = currNode.childrenPaths[currIndex];
             currNode = Node::LoadFromFile(currPath);
@@ -407,68 +405,106 @@ class Btree {
             // merge with left sibling
             Node leftSibling = Node::LoadFromFile(parentNode.childrenPaths[index - 1]);
             // parentNode.keys.push_back(leftSibling.keys[index - 1]);
-
-            for (int i = 0; i < leftSibling.keys.getCurr(); ++i) {
-                parentNode.keys.insertSorted(leftSibling.keys[i]);
+            Key newKey = parentNode.keys[index - 1];
+            leftSibling.keys.push_back(newKey);
+            for (int i = 0; i < node.keys.getCurr(); ++i) {
+                leftSibling.keys.insertSorted(node.keys[i]);
             }
-
-            // remove current node
-            leftSibling.keys.clear();
-            filesystem::remove(parentNode.childrenPaths[index]);
-            parentNode.childrenPaths.Destroy(index);
-            filesystem::path temp = parentNode.childrenPaths.back();
-            filesystem::remove(temp);
-            parentNode.childrenPaths.pop();
+            if (!node.isLeaf) {
+                for (int i = 0; i < node.childrenPaths.getCurr(); ++i) {
+                    leftSibling.childrenPaths.push_back(node.childrenPaths[i]);
+                }
+            }
+            parentNode.keys.Destroy(index - 1);
+            filesystem::path deletePath = parentNode.childrenPaths[index-1];
+            parentNode.childrenPaths.Destroy(index-1);
+            leftSibling.keys.Destroy(index);
+            leftSibling.saveToFile(parentNode.childrenPaths[index - 1]);
             parentNode.saveToFile(node.parent);
+
+            filesystem::remove(deletePath);
 
         } else {
             // merge with right sibling
             Node rightSibling = Node::LoadFromFile(parentNode.childrenPaths[index + 1]);
             // parentNode.keys.push_back(rightSibling.keys[0]);
-
+            Key newKey = parentNode.keys[index];
+            node.keys.push_back(newKey);
             for (int i = 1; i < rightSibling.keys.getCurr(); ++i) {
-                parentNode.keys.insertSorted(rightSibling.keys[i]);
+                node.keys.insertSorted(rightSibling.keys[i]);
+            }
+            // If not leaf, also transfer child pointers
+            if (!rightSibling.isLeaf) {
+                for (int i = 0; i < rightSibling.childrenPaths.getCurr(); ++i) {
+                    node.childrenPaths.push_back(rightSibling.childrenPaths[i]);
+                }
             }
 
-            // remove right sibling
-            rightSibling.keys.clear();
-            filesystem::remove(parentNode.childrenPaths[index + 1]);
             parentNode.childrenPaths.Destroy(index+1);
-            filesystem::path temp = parentNode.childrenPaths.back();
-            filesystem::remove(temp);
-            parentNode.childrenPaths.pop();
+            parentNode.keys.Destroy(index);
+
+            node.saveToFile(parentNode.childrenPaths[index]);
             parentNode.saveToFile(node.parent);
+
+            filesystem::remove(parentNode.childrenPaths[index + 1]);
+        }
+        if (parentNode.keys.getCurr() < minKeys) {
+            if (parentNode.parent == "NULL") {
+                // If parent is root and has no keys left change root
+                if (parentNode.childrenPaths.getCurr() == 1) {
+                    // filesystem::remove(root);
+                    Node newRoot = Node::LoadFromFile(parentNode.childrenPaths[0]);
+                    this->root = folderPath / "ROOT.txt";
+                    newRoot.saveToFile(root);
+
+                    filesystem::remove(parentNode.childrenPaths[0]);
+                }
+            } else {
+                removeLeaf(parentNode.parent, parentNode, index);
+            }
         }
     }
     void removeInternal(filesystem::path& path, Node& node, int index) {
-        int minKeys = ceil(degree/2)-1;
+        int minKeys = ceil(degree/2.0)-1;
 
-        Node leftSibling = Node::LoadFromFile(node.childrenPaths[index]);
-        Node rightSibling = Node::LoadFromFile(node.childrenPaths[index + 1]);
+        // if (index > 0)
+        Node leftSibling = Node::LoadFromFile(node.childrenPaths[index-1]);
+        Node rightSibling = Node::LoadFromFile(node.childrenPaths[index]);
 
         if (leftSibling.keys.getCurr() > minKeys) {
             Node pre = leftSibling;
+            filesystem::path prePath = node.childrenPaths[index-1];
             while (!pre.isLeaf) {
-                pre = Node::LoadFromFile(pre.childrenPaths[pre.childrenPaths.getCurr() - 1]);
+                pre = Node::LoadFromFile(prePath);
+                prePath = pre.childrenPaths[pre.childrenPaths.getCurr() - 1];
             }
             Key newKey = pre.keys.back();
-            node.keys[index] = newKey;
+            node.keys[index-1] = newKey;
             node.saveToFile(path);
-            removeLeaf(node.childrenPaths[index], leftSibling, pre.keys.getCurr() - 1);
+
+            removeLeaf(prePath, pre, pre.keys.getCurr() - 1);
         }
         else if (rightSibling.keys.getCurr() > minKeys) {
             Node suc = rightSibling;
+            filesystem::path suckPath = node.childrenPaths[index];
             while (!suc.isLeaf) {
-                suc = Node::LoadFromFile(suc.childrenPaths[0]);
+                suc = Node::LoadFromFile(suckPath);
+                suckPath = suc.childrenPaths[0];
             }
             Key newKey = suc.keys[0];
-            node.keys[index] = newKey;
+            node.keys[index-1] = newKey;
             node.saveToFile(path);
-            removeLeaf(node.childrenPaths[index + 1], rightSibling, 0);
+            removeLeaf(suckPath, suc, 0);
         }
         else {
             // move key down and merge
-            leftSibling.keys.push_back(node.keys[index]);
+            cout<<"Key values: \n";
+            for (int i=0;i<node.keys.getCurr();++i) {
+                cout<<node.keys[i].key<<" ";
+                cout<<node.childrenPaths[i].string()<<endl;
+            }
+            cout<<endl;
+            leftSibling.keys.push_back(node.keys[index-1]);
 
             // move all keys and children from right child to left child
             for (int i = 0; i < rightSibling.keys.getCurr(); ++i) {
@@ -481,7 +517,7 @@ class Btree {
             }
 
             // Remove the key and right child path from the parent node
-            node.keys.Destroy(index);
+            node.keys.Destroy(index-1);
             node.childrenPaths.Destroy(index + 1);
 
             // Save updated nodes
@@ -504,11 +540,44 @@ class Btree {
             }
         }
     }
+    Pair<filesystem::path, int, int> searchNode_Deletion(const T& value) {
+        if (root == "NULL") {
+            return Pair<filesystem::path, int, int>("NULL", -1, -1);
+        }
+
+        filesystem::path currPath = root;
+        int childIndexInParent = -1;
+        int keyIndexInNode = -1;
+
+        while (true) {
+            Node currNode = Node::LoadFromFile(currPath);
+
+            int i = 0;
+            while (i < currNode.keys.getCurr() && value > currNode.keys[i].key) {
+                i++;
+            }
+
+            if (i < currNode.keys.getCurr() && value == currNode.keys[i].key) {
+                keyIndexInNode = i;
+                break;
+            }
+
+            if (currNode.isLeaf) {
+                return Pair<filesystem::path, int, int>("NULL", -1, -1);
+            }
+
+            childIndexInParent = i;
+            currPath = currNode.childrenPaths[i];
+        }
+
+        return Pair<filesystem::path, int, int>(currPath, keyIndexInNode, childIndexInParent);
+    }
+
     void removeNode(filesystem::path& root,const T& value) {
         if (root == "NULL") {
             throw runtime_error ("B-tree is empty.");
         }
-        Pair<path,int,int> toBeRemoved = searchNode(value);
+        Pair<path,int,int> toBeRemoved = searchNode_Deletion(value);
 
         if (toBeRemoved.third == -1) {
             return;
@@ -527,10 +596,10 @@ class Btree {
             }
         }
         else if (node.isLeaf) {
-            removeLeaf(toBeRemoved.first,node,toBeRemoved.second);
+            removeLeaf(toBeRemoved.first,node,toBeRemoved.third);
         }
         else {
-            removeInternal(toBeRemoved.first,node,toBeRemoved.second);
+            removeInternal(toBeRemoved.first,node,toBeRemoved.third);
         }
 
     }
@@ -545,10 +614,32 @@ public:
         this->degree = degree;
         nodeCount = 0;
     }
+    filesystem::path getRoot() {
+        return root;
+    }
     void insert(const T& value) {
         insertNode(root,value);
     }
     void remove(const T& value) {
         removeNode(root,value);
+    }
+    void printTree(filesystem::path root, int depth = 0)
+    {
+        cout << "depth " << depth << ": ";
+        Node x = Node::LoadFromFile(root);
+        for (int i = 0; i < x.keys.getCurr(); i++)
+        {
+            cout << x.keys[i].key << " ";
+        }
+        cout << endl;
+
+        depth++;
+        if (x.childrenPaths.getCurr() != 0)
+        {
+            for (int i = 0; i < x.childrenPaths.getCurr(); i++)
+            {
+                printTree(x.childrenPaths[i], depth);
+            }
+        }
     }
 };
