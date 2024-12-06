@@ -99,6 +99,8 @@ public:
 					currentColumn = "";
 				}
 			}
+			if(!(currentColumn==""))
+				colNames.push_back(currentColumn);
 
 			//display and select column;
 			cout << "==== columns ====\n";
@@ -387,6 +389,8 @@ public:
 				currentColumn = "";
 			}
 		}
+		if (!(currentColumn == ""))
+			colNames.push_back(currentColumn);
 		RowEntry newRow;
 		for (int a = 0; a < colNames.getCurr(); a++)
 		{
