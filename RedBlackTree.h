@@ -16,7 +16,7 @@ enum NodeColor {
 template<class T>
 class RedBlackTree: public ParentTree<T> {
 	//===================================== RedBlackNode Node ==========================================
-	struct RedBlackNode {
+	struct Node {
 		T data;
 		String hash;
 		filesystem::path left;
@@ -26,7 +26,7 @@ class RedBlackTree: public ParentTree<T> {
 		bool debt;
 		int frequency;
 		Vector<long long> rowIndexes;
-		RedBlackNode(T data = T()) {
+		Node(T data = T()) {
 			this->data = data;
 			color = RED;
 			debt = false;
@@ -63,7 +63,7 @@ class RedBlackTree: public ParentTree<T> {
 			file << this->debt << '\n';
 			file.close();
 		}
-		static RedBlackNode readFile(const filesystem::path& path, const RedBlackTree& merc) {
+		static Node readFile(const filesystem::path& path, const RedBlackTree& merc) {
 			if (path == "NULL") {
 				throw runtime_error("Accessing NULL path");
 			}
@@ -73,7 +73,7 @@ class RedBlackTree: public ParentTree<T> {
 				throw runtime_error("Unable to open file for reading..");
 			}
 
-			RedBlackNode node;
+			Node node;
 			if constexpr (is_same<T, String>::value) {
 				getline(file, node.data); 
 			}
@@ -156,21 +156,21 @@ class RedBlackTree: public ParentTree<T> {
 		return false;
 
 	}
-	//===================================== RedBlackNode Functions ==========================================
+	//===================================== Node Functions ==========================================
 	//===================================== Encapsulated Functions ==========================================
 	void rotateRight(filesystem::path& path) {
-		RedBlackNode node = RedBlackNode::readFile(path, *this);
+		Node node = Node::readFile(path, *this);
 
 		if (node.left == "NULL") {
 			throw runtime_error("Cannot perform right rotation on a node with no left child.");
 		}
-		RedBlackNode leftNode = RedBlackNode::readFile(node.left, *this);
+		Node leftNode = Node::readFile(node.left, *this);
 		filesystem::path leftPath = node.left;        
 		filesystem::path grandRightPath = leftNode.right; 
 
 		node.left = grandRightPath;
 		if (grandRightPath != "NULL") {
-			RedBlackNode grandRightNode = RedBlackNode::readFile(grandRightPath, *this);
+			Node grandRightNode = Node::readFile(grandRightPath, *this);
 			grandRightNode.parent = path; 
 			grandRightNode.updateFile(grandRightPath); 
 		}
@@ -178,7 +178,7 @@ class RedBlackTree: public ParentTree<T> {
 		leftNode.parent = node.parent;
 
 		if (node.parent != "NULL") {
-			RedBlackNode parentNode = RedBlackNode::readFile(node.parent, *this);
+			Node parentNode = Node::readFile(node.parent, *this);
 			if (parentNode.left == path) {
 				parentNode.left = leftPath; 
 			}
@@ -200,22 +200,22 @@ class RedBlackTree: public ParentTree<T> {
 		// path = leftPath;
 	}
 	void rotateLeft(filesystem::path& path) {
-		RedBlackNode node = RedBlackNode::readFile(path, *this);
-		RedBlackNode rightNode = RedBlackNode::readFile(node.right, *this);
+		Node node = Node::readFile(path, *this);
+		Node rightNode = Node::readFile(node.right, *this);
 
 		filesystem::path rightPath = node.right; 
 		filesystem::path grandLeftChildPath = rightNode.left; 
 		node.right = grandLeftChildPath;
 
 		if (grandLeftChildPath != "NULL") {
-			RedBlackNode grandLeftChildNode = RedBlackNode::readFile(grandLeftChildPath, *this);
+			Node grandLeftChildNode = Node::readFile(grandLeftChildPath, *this);
 			grandLeftChildNode.parent = path;
 			grandLeftChildNode.updateFile(grandLeftChildPath); 
 		}
 		rightNode.parent = node.parent;
 
 		if (node.parent != "NULL") {
-			RedBlackNode parentNode = RedBlackNode::readFile(node.parent, *this);
+			Node parentNode = Node::readFile(node.parent, *this);
 			if (parentNode.left == path) {
 				parentNode.left = rightPath; 
 			}
@@ -240,22 +240,22 @@ class RedBlackTree: public ParentTree<T> {
 	void fixOrientation_Insertion(filesystem::path& path) {
 		if (path == "NULL") return;
 		if (path == rootPath) {
-			RedBlackNode node = RedBlackNode::readFile(path, *this);
+			Node node = Node::readFile(path, *this);
 			node.color = BLACK;
 			node.updateFile(path);
 			return;
 		}
-		RedBlackNode node = RedBlackNode::readFile(path, *this);
+		Node node = Node::readFile(path, *this);
 		filesystem::path Parentpath = node.parent;
-		RedBlackNode parent = RedBlackNode::readFile(Parentpath, *this);
+		Node parent = Node::readFile(Parentpath, *this);
 
 		if (parent.color == RED) {
 			filesystem::path grandParentPath = parent.parent;
-			RedBlackNode grandParent = RedBlackNode::readFile(grandParentPath, *this);
+			Node grandParent = Node::readFile(grandParentPath, *this);
 			filesystem::path unclePath = grandParent.left == Parentpath ? grandParent.right : grandParent.left;
-			RedBlackNode uncle;
+			Node uncle;
 			if (unclePath != "NULL") {
-				uncle = RedBlackNode::readFile(unclePath, *this);
+				uncle = Node::readFile(unclePath, *this);
 			}
 
 			if (unclePath != "NULL" && uncle.color == RED) {
@@ -293,7 +293,7 @@ class RedBlackTree: public ParentTree<T> {
 	void insertNode(filesystem::path& path, const T& data, const long long& rowIndex) {
 		if (path == "NULL") {
 			filesystem::path newPath = createPath(data);
-			RedBlackNode newNode(data);
+			Node newNode(data);
 			newNode.parent = "NULL";
 			newNode.rowIndexes.push_back(rowIndex);
 			path = newPath;
@@ -302,7 +302,7 @@ class RedBlackTree: public ParentTree<T> {
 			return;
 		}
 		else {
-			RedBlackNode curr = RedBlackNode::readFile(path, *this);
+			Node curr = Node::readFile(path, *this);
 			if (data == curr.data) {
 				curr.frequency++;
 				curr.rowIndexes.push_back(rowIndex);
@@ -312,7 +312,7 @@ class RedBlackTree: public ParentTree<T> {
 			else if (data < curr.data) {
 				if (curr.left == "NULL") {
 					filesystem::path newPath = createPath(data);
-					RedBlackNode newNode(data);
+					Node newNode(data);
 					newNode.parent = path;
 					newNode.rowIndexes.push_back(rowIndex);
 					curr.left = newPath;
@@ -328,7 +328,7 @@ class RedBlackTree: public ParentTree<T> {
 			else if (data > curr.data) {
 				if (curr.right == "NULL") {
 					filesystem::path newPath = createPath(data);
-					RedBlackNode newNode(data);
+					Node newNode(data);
 					newNode.parent = path;
 					newNode.rowIndexes.push_back(rowIndex);
 					curr.right = newPath;
@@ -345,9 +345,9 @@ class RedBlackTree: public ParentTree<T> {
 	}
 	void fixDebt(filesystem::path& path) {
 		if (path == "NULL" ) return;
-		RedBlackNode parent;
-		RedBlackNode sibling;
-		RedBlackNode node = RedBlackNode::readFile(path, *this);
+		Node parent;
+		Node sibling;
+		Node node = Node::readFile(path, *this);
 
 		if (node.color == RED) {
 			node.color = BLACK;
@@ -356,10 +356,10 @@ class RedBlackTree: public ParentTree<T> {
 		}
 		else if (path != rootPath) {
 			filesystem::path parentPath = node.parent;
-			parent = RedBlackNode::readFile(parentPath, *this);
+			parent = Node::readFile(parentPath, *this);
 
 			filesystem::path siblingPath = (parent.left == path) ? parent.right : parent.left;
-			sibling = RedBlackNode::readFile(siblingPath, *this);
+			sibling = Node::readFile(siblingPath, *this);
 
 			// Case 1: Sibling is RED
 			if (siblingPath != "NULL" && sibling.color == RED) {
@@ -385,8 +385,8 @@ class RedBlackTree: public ParentTree<T> {
 				cout << leftNephewPath << endl;
 				filesystem::path rightNephewPath = sibling.right;
 				cout << rightNephewPath << endl;
-				RedBlackNode leftNephew = (leftNephewPath != "NULL") ? RedBlackNode::readFile(leftNephewPath, *this) : RedBlackNode();
-				RedBlackNode rightNephew = (rightNephewPath != "NULL") ? RedBlackNode::readFile(rightNephewPath, *this) : RedBlackNode();
+				Node leftNephew = (leftNephewPath != "NULL") ? Node::readFile(leftNephewPath, *this) : Node();
+				Node rightNephew = (rightNephewPath != "NULL") ? Node::readFile(rightNephewPath, *this) : Node();
 
 				// Case 2a: One of the sibling's children is RED
 				if ((leftNephewPath != "NULL" && leftNephew.color == RED) ||
@@ -426,7 +426,7 @@ class RedBlackTree: public ParentTree<T> {
 
 						rotateLeft(siblingPath);
 
-						leftNephew = RedBlackNode::readFile(sibling.left, *this);
+						leftNephew = Node::readFile(sibling.left, *this);
 						leftNephew.color = BLACK;
 						sibling.color = parent.color;
 						parent.color = BLACK;
@@ -447,7 +447,7 @@ class RedBlackTree: public ParentTree<T> {
 
 						rotateRight(siblingPath);
 
-						rightNephew = RedBlackNode::readFile(sibling.right, *this);
+						rightNephew = Node::readFile(sibling.right, *this);
 						rightNephew.color = BLACK;
 						sibling.color = parent.color;
 						parent.color = BLACK;
@@ -494,7 +494,7 @@ class RedBlackTree: public ParentTree<T> {
 
 	void fixOrientation_Deletion(filesystem::path& path, bool hasDebt) {
 		if (path == "NULL") return;
-		RedBlackNode node = RedBlackNode::readFile(path, *this);
+		Node node = Node::readFile(path, *this);
 		if (node.color == RED) {
 			node.color = BLACK;
 			node.updateFile(path);
@@ -511,7 +511,7 @@ class RedBlackTree: public ParentTree<T> {
 			cout << "Unable to find key..Does not exist\n";
 			return;
 		}
-		RedBlackNode node = RedBlackNode::readFile(path, *this);
+		Node node = Node::readFile(path, *this);
 		if (data < node.data) {
 			removeNode(node.left, data, rowIndex);
 		}
@@ -552,14 +552,14 @@ class RedBlackTree: public ParentTree<T> {
 							node.updateFile(path);
 						}
 						else if (node.left != "NULL") {
-							RedBlackNode temp = RedBlackNode::readFile(node.left, *this);
+							Node temp = Node::readFile(node.left, *this);
 							if (temp.color == BLACK) {
 								node.debt = true;
 								node.updateFile(path);
 							}
 						}
 						else if (node.right != "NULL") {
-							RedBlackNode temp = RedBlackNode::readFile(node.right, *this);
+							Node temp = Node::readFile(node.right, *this);
 							if (temp.color == BLACK) {
 								node.debt = true;
 								node.updateFile(path);
@@ -576,7 +576,7 @@ class RedBlackTree: public ParentTree<T> {
 					else if(node.color == RED)
 					{
 						filesystem::path parentPath = node.parent;
-						RedBlackNode parent = RedBlackNode::readFile(parentPath, *this);
+						Node parent = Node::readFile(parentPath, *this);
 						if (rootPath != "NULL") {
 							if (parent.left == path) {
 								parent.left = "NULL";
@@ -600,13 +600,13 @@ class RedBlackTree: public ParentTree<T> {
 				else if (node.left == "NULL") {
 					if (node.right != "NULL")
 					{
-						RedBlackNode right = RedBlackNode::readFile(node.right, *this);
+						Node right = Node::readFile(node.right, *this);
 						right.parent = node.parent;
 						right.updateFile(node.right);
 					}
 					if (node.parent != "NULL")
 					{
-						RedBlackNode parent = RedBlackNode::readFile(node.parent, *this);
+						Node parent = Node::readFile(node.parent, *this);
 						parent.left == path ? parent.left = node.right : parent.right = node.right;
 						parent.updateFile(node.parent);
 					}
@@ -619,13 +619,13 @@ class RedBlackTree: public ParentTree<T> {
 				else if (node.right == "NULL") {
 					if (node.left != "NULL")
 					{
-						RedBlackNode left = RedBlackNode::readFile(node.left, *this);
+						Node left = Node::readFile(node.left, *this);
 						left.parent = node.parent;
 						left.updateFile(node.left);
 					}
 					if (node.parent != "NULL")
 					{
-						RedBlackNode parent = RedBlackNode::readFile(node.parent, *this);
+						Node parent = Node::readFile(node.parent, *this);
 						parent.right == path ? parent.right = node.left : parent.left = node.left;
 						parent.updateFile(node.parent);
 					}
@@ -637,11 +637,11 @@ class RedBlackTree: public ParentTree<T> {
 			else {
 				// both child exist
 				if (node.left != "NULL" && node.right != "NULL") {
-					RedBlackNode successor = RedBlackNode::readFile(node.left, *this);
+					Node successor = Node::readFile(node.left, *this);
 					filesystem::path successorPath = node.left;
 					while (successor.right != "NULL") {
 						successorPath = successor.right;
-						successor = RedBlackNode::readFile(successor.right, *this);
+						successor = Node::readFile(successor.right, *this);
 					}
 					node.data = successor.data;
 					node.frequency = successor.frequency;
@@ -653,23 +653,23 @@ class RedBlackTree: public ParentTree<T> {
 					successor.updateFile(successorPath);
 					removeNode(node.left, successor.data, rowIndex);
 
-					node = RedBlackNode::readFile(path, *this);
+					node = Node::readFile(path, *this);
 					filesystem::rename(path, updatedPath);
 					if (node.parent != "NULL")
 					{
-						RedBlackNode parent = RedBlackNode::readFile(node.parent, *this);
+						Node parent = Node::readFile(node.parent, *this);
 						parent.left == path ? parent.left = updatedPath : parent.right = updatedPath;
 						parent.updateFile(node.parent);
 					}
 					if (node.left != "NULL")
 					{
-						RedBlackNode left = RedBlackNode::readFile(node.left, *this);
+						Node left = Node::readFile(node.left, *this);
 						left.parent = updatedPath;
 						left.updateFile(node.left);
 					}
 					if (node.right != "NULL")
 					{
-						RedBlackNode right = RedBlackNode::readFile(node.right, *this);
+						Node right = Node::readFile(node.right, *this);
 						right.parent = updatedPath;
 						right.updateFile(node.right);
 					}
@@ -689,7 +689,7 @@ class RedBlackTree: public ParentTree<T> {
 			cout << "-" << endl;
 			return;
 		}
-		RedBlackNode node = RedBlackNode::readFile(path, *this);
+		Node node = Node::readFile(path, *this);
 		inorderPrint(node.right, depth + 1);
 		for (int a = 0; a < depth; a++)
 		{
@@ -698,7 +698,24 @@ class RedBlackTree: public ParentTree<T> {
 		cout << node.data <<"("<<node.color<<" , "<<node.frequency<<")"<<endl;
 		inorderPrint(node.left, depth + 1);
 	}
-	
+
+	Node helperSearch(const filesystem::path& root, const T& value) {
+		if (root == "NULL") {
+			return Node();
+		}
+
+		Node currentNode = Node::readFile(root, *this);
+
+		if (value < currentNode.data) {
+			return helperSearch(currentNode.left, value);
+		}
+		else if (value > currentNode.data) {
+			return helperSearch(currentNode.right, value);
+		}
+		else {
+			return currentNode;
+		}
+	}
 public:
 	filesystem::path Root()const { return rootPath; }
 	RedBlackTree()
@@ -738,23 +755,17 @@ public:
 	void print() {
 		inorderPrint(rootPath);
 	}
-	filesystem::path Search(filesystem::path root, T value) {
-		if (root == "NULL") {
-			cout << "Unable to find the searched value: " << value << endl;
-			return "NULL";
+	Vector<long long>search(const T& data)
+	{
+		Node node = this->helperSearch(this->rootPath, data);
+		if (node.rowIndexes.getCurr() == 0)
+		{
+			cout << "No instances of key: " << data << " exist." << endl;
+			return Vector<long long>();
 		}
-
-		RedBlackNode currentNode = RedBlackNode::readFile(root, *this);
-
-		if (value < currentNode.data) {
-			return Search(currentNode.left, value); 
-		}
-		else if (value > currentNode.data) {
-			return Search(currentNode.right, value); 
-		}
-		else {
-			cout << "Value found: " << value << " at path: " << root << endl;
-			return root; 
+		else
+		{
+			return node.rowIndexes;
 		}
 	}
 

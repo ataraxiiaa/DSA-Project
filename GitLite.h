@@ -363,5 +363,69 @@ public:
 		filesystem::path repoFilePath = repoPath / "REPO_DATA.txt";
 		return repoFilePath;
 	}
+	void insert()
+	{
+		fstream CSV(CSVPath);
+		if (!CSV.is_open()) {
+			std::cerr << "Error: Could not open file." << std::endl;
+			return;
+		}
+		//read header of CSV
+		String header;
+		getline(CSV, header);
+		Vector<String> colNames;
+		String currentColumn;
+		for (int a = 0; a < header.getSize(); a++)
+		{
+			if (header[a] != ',')
+			{
+				currentColumn += header[a];
+			}
+			else
+			{
+				colNames.push_back(currentColumn);
+				currentColumn = "";
+			}
+		}
+		RowEntry newRow;
+		for (int a = 0; a < colNames.getCurr(); a++)
+		{
+			currentColumn = "";
+			cout << colNames[a] << ": ";
+			getline(cin, currentColumn);
+			newRow.cells.push_back(currentColumn);
+		}
+		newRow.rowIndex = -1;
+		storeChange("INSERT", newRow);
 
+		cout << "Entry inserted." << endl;
+	}
+	void search()
+	{
+		cout << "Enter key to search: ";
+		String input;
+		getline(cin, input);
+		Vector<long long> indexes=this->currentTree->search(input);
+		if (indexes.getCurr() == 0)
+			return;
+		for (int a = 0; a < indexes.getCurr(); a++)
+		{
+			cout << "Entry " << a << ": " << this->currentMerkle->search(indexes[a])<<endl;
+		}
+	}
+	void storeChange(const String& operation, RowEntry& op)
+	{
+		path tempFolder = this->currentBranch / "temp";
+		if (!exists(tempFolder))
+		{
+			filesystem::create_directories(tempFolder);
+		}
+		path changesFile = tempFolder / "CHANGES.txt";
+		ofstream file(changesFile, ios::app);
+		if (!file.is_open()) 
+			throw runtime_error("Failed to open CHANGES.txt file.");
+		file << operation << '\n';
+		file << op.rowIndex << ',' << op << '\n';
+	}
+	
 };

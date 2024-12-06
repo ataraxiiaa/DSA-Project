@@ -493,6 +493,23 @@ private:
 		inorderPrint(node.left, depth + 1);
 	}
 
+	Node helperSearch(const filesystem::path& root, const long long& value) {
+		if (root == "NULL") {
+			return Node();
+		}
+
+		Node currentNode = Node::readFile(root, *this);
+
+		if (value < currentNode.index) {
+			return helperSearch(currentNode.left, value);
+		}
+		else if (value > currentNode.index) {
+			return helperSearch(currentNode.right, value);
+		}
+		else {
+			return currentNode;
+		}
+	}
 	long long staticCounter = 0;
 public:
 
@@ -635,6 +652,19 @@ public:
 
 		rewritefile.close();
 	}
+	String search(const long long& data)
+	{
+		Node node = this->helperSearch(this->rootPath, data);
+		String curr;
+		for (int a = 0; a < node.rowData.cells.getCurr(); a++)
+		{
+			if (a > 0)
+				curr += ',';
+			curr += node.rowData.cells[a];
+		}
+		return curr;
+	}
+
 
 };
 

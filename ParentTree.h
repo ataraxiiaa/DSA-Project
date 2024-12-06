@@ -23,7 +23,7 @@ protected:
 		}
 		return result;
 	}
-
+	class Node;
 public:
 	static void updateNewBranch(const path& targetFile, const path& oldBranch, const path& newBranch)
 	{
@@ -90,6 +90,7 @@ public:
 
 	virtual void insert(const T& data, const long long& rowIndex) = 0;
 	virtual void remove(const T& data, const long long& rowIndex) = 0;
+	virtual Vector<long long> search(const T& data)=0;
 	virtual void print() = 0;
 	virtual void saveDataToFile() = 0;
 };

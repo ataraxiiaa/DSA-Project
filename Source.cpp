@@ -57,6 +57,14 @@ int main()
 			else
 				cout << "Error: Invalid file path." << endl;
 		}
+		else if (input == "insert")
+		{
+			git.insert();
+		}
+		else if (input == "search")
+		{
+			git.search();
+		}
 		else if (input == "exit")
 		{
 			break;

@@ -549,6 +549,23 @@ private:
 		helperF(node.right, f);
 	}
 
+	Node helperSearch(const filesystem::path& root, const T& value) {
+		if (root == "NULL") {
+			return Node();
+		}
+
+		Node currentNode = Node::readFile(root, *this);
+
+		if (value < currentNode.data) {
+			return helperSearch(currentNode.left, value);
+		}
+		else if (value > currentNode.data) {
+			return helperSearch(currentNode.right, value);
+		}
+		else {
+			return currentNode;
+		}
+	}
 public:
 
 	AVL()
@@ -617,14 +634,21 @@ public:
 		file >> this->branchPath;
 		file.close();
 	}
-
-
-	void displayFrequency()
+	Vector<long long>search(const T& data)
 	{
-		int f = 0;
-		helperF(rootPath, f);
-		cout << "Total Frequency:" << f << endl;
+		Node node=this->helperSearch(this->rootPath, data);
+		if (node.rowIndexes.getCurr() == 0)
+		{
+			cout << "No instances of key: " << data << " exist." << endl;
+			return Vector<long long>();
+		}
+		else
+		{
+			return node.rowIndexes;
+		}
 	}
+
+	
 };
 
 
