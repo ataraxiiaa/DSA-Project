@@ -99,7 +99,9 @@ ostream& operator<<(ostream& output, const String& str) // outputs the string
 istream& operator>>(istream& input, String& str) // inputs the string
 {
 	char ch;
-	while (input.get(ch) && (ch == ' ' || ch == '\n' || ch != '\0')) {}
+	while (input.get(ch) && (ch == ' ' || ch == '\n')) {}
+	if(ch!=' ' && ch!='\n' || ch!='\0')
+		str += ch;
 	while (input.get(ch) && ch != '\0' && ch != '\n' && ch != ' ')
 		str += ch;
 	return input;

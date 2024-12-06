@@ -267,5 +267,12 @@ public:
 			cout << "Loaded existing repository: " << repoPath << endl;
 		}
 	}
+	void printCurrentTree()
+	{
+		if (currentTree)
+			this->currentTree->print();
+		else
+			cout << "No tree loaded." << endl;
+	}
 
 };

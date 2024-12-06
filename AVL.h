@@ -510,7 +510,7 @@ private:
 		{
 			cout << '\t';
 		}
-		cout << node.data << endl;
+		cout << node.data <<'('<<node.height<<','<<node.frequency<<')' << endl;
 		inorderPrint(node.left, depth+1);
 	}
 
