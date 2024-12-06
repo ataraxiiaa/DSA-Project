@@ -29,6 +29,19 @@ public:
 			this->ptr[a] = copy.ptr[a];
 		}
 	}
+
+	Vector& operator=(const Vector& copy)
+	{
+		if (this->ptr)
+			delete[] this->ptr;
+		this->maxSize = copy.maxSize;
+		this->currSize = copy.currSize;
+		this->ptr = new Type[maxSize];
+		for (int a = 0; a < currSize; a++)
+		{
+			this->ptr[a] = copy.ptr[a];
+		}
+	}
 	~Vector() { delete[] ptr; } // Destructor
 
 	// Adding values to the array
