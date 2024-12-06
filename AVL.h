@@ -117,7 +117,7 @@ private:
 		}
 		else
 		{
-			filePath /= to_string(value);
+			filePath /= value;
 		}
 		filePath+=".txt";
 		return filePath;
@@ -345,7 +345,7 @@ private:
 	}
 
 	//Updates path sent as para
-	void helperRemove(filesystem::path& path, const T& data)
+	void helperRemove(filesystem::path& path, const T& data, const long long& rowIndex)
 	{
 		//didnt find element
 		if (path.empty() || path == "NULL")
@@ -359,11 +359,11 @@ private:
 		//find the element
 		if (data < node.data)
 		{
-			helperRemove(node.left, data);
+			helperRemove(node.left, data, rowIndex);
 		}
 		else if (data > node.data)
 		{
-			helperRemove(node.right, data);
+			helperRemove(node.right, data, rowIndex);
 		}
 		//element found
 		else
@@ -371,8 +371,21 @@ private:
 			//only decrement frequency if it is >1
 			if (node.frequency > 1)
 			{
-				node.frequency--;
-				node.updateFile(path);
+				bool found = 0;
+				for (int a = 0; a < node.rowIndexes.getCurr(); a++)
+				{
+					if (node.rowIndexes[a] == rowIndex)
+					{
+						node.rowIndexes.Destroy(a);
+						found = 1;
+						break;
+					}
+				}
+				if (found)
+				{
+					node.frequency--;
+					node.updateFile(path);
+				}
 				return;
 			}
 			else
@@ -437,6 +450,7 @@ private:
 					//replace nodes data with successor data
 					node.data = successor.data;
 					node.frequency = successor.frequency;
+					node.rowIndexes = successor.rowIndexes;
 					node.hash = successor.hash;
 					node.updateFile(path);
 					filesystem::path updatedPath = generateFilePath(successor.data);
@@ -444,7 +458,7 @@ private:
 					//delete successor from right subtree
 					successor.frequency = 1;
 					successor.updateFile(successorPath);
-					helperRemove(node.right, successor.data);
+					helperRemove(node.right, successor.data, rowIndex);
 					
 					//rename the node that just got replaced and update the new path in all neighbors
 					node = Node::readFile(path);
@@ -523,11 +537,6 @@ public:
 			filesystem::path nodesPath = this->folderPath / "NODES";
 			filesystem::create_directories(nodesPath);
 		}
-		if (rootPath != "NULL")
-		{
-			if (!filesystem::exists(rootPath))
-				throw runtime_error("Root path does not exist.");
-		}
 	}
 	AVL(filesystem::path folderPath, filesystem::path rootPath)
 	{
@@ -541,9 +550,9 @@ public:
 	{
 		helperInsert(rootPath,"NULL", data, rowIndex);
 	}
-	void remove(const T& data) override
+	void remove(const T& data, const long long& rowIndex) override
 	{
-		helperRemove(rootPath, data);
+		helperRemove(rootPath, data, rowIndex);
 	}
 
 	void print() override

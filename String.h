@@ -318,6 +318,7 @@ String String ::operator-=(const char* str)
 
 	return *this;
 }
+#include<string>
 int String :: operator()(char ch) const
 {
 	for (int i = 0; this->data[i] != '\0'; ++i)

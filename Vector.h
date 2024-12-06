@@ -41,6 +41,7 @@ public:
 		{
 			this->ptr[a] = copy.ptr[a];
 		}
+		return *this;
 	}
 	~Vector() { delete[] ptr; } // Destructor
 

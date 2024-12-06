@@ -124,7 +124,7 @@ private:
 			}
 			else if (treeType == 2)//RB
 			{
-
+				currentTree = new RedBlackTree<String>(treeFolder, treeRoot);
 			}
 			else if (treeType == 3)//B
 			{
@@ -142,7 +142,7 @@ private:
 
 
 public:
-	GitLite(): colNumber(-1), currentMerkle(nullptr), currentTree(nullptr)
+	GitLite(): colNumber(-1), currentMerkle(nullptr), currentTree(nullptr), treeType(-1)
 	{}
 	~GitLite()
 	{
@@ -234,7 +234,7 @@ public:
 			}
 			else if (treeType == 2)//RedBlack
 			{
-
+				currentTree = new RedBlackTree<String>(currentBranch);
 			}
 			else if (treeType == 3)//BTree
 			{

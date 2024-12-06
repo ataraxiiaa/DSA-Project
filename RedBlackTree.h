@@ -1,6 +1,7 @@
 #pragma once
-
-#include <string>
+#include"ParentTree.h"
+#include "Vector.h"
+#include "String.h"
 #include <iostream>
 #include <filesystem>
 using namespace std;
@@ -13,17 +14,18 @@ enum NodeColor {
 
 
 template<class T>
-class RedBlackTree {
+class RedBlackTree: public ParentTree<T> {
 	//===================================== RedBlackNode Node ==========================================
 	struct RedBlackNode {
 		T data;
-		string hash;
+		String hash;
 		filesystem::path left;
 		filesystem::path right;
 		filesystem::path parent;
 		NodeColor color;
 		bool debt;
 		int frequency;
+		Vector<long long> rowIndexes;
 		RedBlackNode(T data = T()) {
 			this->data = data;
 			color = RED;
@@ -46,6 +48,13 @@ class RedBlackTree {
 
 			file << this->data << '\n';
 			file << this->frequency << '\n';
+			for (int a = 0; a < this->frequency; a++)
+			{
+				if (a > 0)
+					file << ' ';
+				file << this->rowIndexes[a];
+			}
+			file << '\n';
 			file << this->color << '\n';
 			file << this->hash << '\n';
 			file << this->left << '\n';
@@ -65,7 +74,7 @@ class RedBlackTree {
 			}
 
 			RedBlackNode node;
-			if constexpr (is_same<T, string>::value) {
+			if constexpr (is_same<T, String>::value) {
 				getline(file, node.data); 
 			}
 			else {
@@ -73,6 +82,14 @@ class RedBlackTree {
 				file.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
 			}
 			file >> node.frequency;
+			file.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+			char delim;
+			long long index;
+			for (int a = 0; a < node.frequency; a++)
+			{
+				file >> index;
+				node.rowIndexes.push_back(index);
+			}
 			file.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
 			int color;
 			file >> color;
@@ -90,22 +107,20 @@ class RedBlackTree {
 		}
 	};
 	//===================================== File Functions ==========================================
-	filesystem::path createPath(T value) {
-		if (!filesystem::exists(folderPath)) {
-			cout << "Created file directory successfully: "<<folderPath << endl;
-			filesystem::create_directories(folderPath);
+	filesystem::path createPath(const T& value) {
+
+		// Construct the file path
+		filesystem::path filePath = folderPath / "NODES";
+		if constexpr (is_same<T, String>::value)
+		{
+			filePath /= value.getData();
 		}
-		filesystem::path newPath = folderPath;
-		string fileName;
-		if constexpr (is_same<T, string>::value) {
-			fileName = value;
+		else
+		{
+			filePath /= value;
 		}
-		else {
-			fileName = to_string(value);
-		}
-		fileName += ".txt";
-		newPath /= fileName;
-		return newPath;
+		filePath += ".txt";
+		return filePath;
 	}
 	bool removeFile(filesystem::path& path) {
 		if (filesystem::exists(path)) {
@@ -147,7 +162,7 @@ class RedBlackTree {
 			parentNode.updateFile(node.parent); 
 		}
 		else {
-			root = leftPath;
+			rootPath = leftPath;
 		}
 
 		leftNode.right = path;
@@ -184,7 +199,7 @@ class RedBlackTree {
 			parentNode.updateFile(node.parent); 
 		}
 		else {
-			root = rightPath;
+			rootPath = rightPath;
 		}
 
 		rightNode.left = path;
@@ -198,7 +213,7 @@ class RedBlackTree {
 
 	void fixOrientation_Insertion(filesystem::path& path) {
 		if (path == "NULL") return;
-		if (path == root) {
+		if (path == rootPath) {
 			RedBlackNode node = RedBlackNode::readFile(path);
 			node.color = BLACK;
 			node.updateFile(path);
@@ -220,7 +235,7 @@ class RedBlackTree {
 			if (unclePath != "NULL" && uncle.color == RED) {
 				uncle.color = BLACK;
 				parent.color = BLACK;
-				if (grandParentPath != root) {
+				if (grandParentPath != rootPath) {
 					grandParent.color = RED;
 					grandParent.updateFile(grandParentPath);
 				}
@@ -249,11 +264,12 @@ class RedBlackTree {
 			}
 		}
 	}
-	void insertNode(filesystem::path& path, T data) {
+	void insertNode(filesystem::path& path, const T& data, const long long& rowIndex) {
 		if (path == "NULL") {
 			filesystem::path newPath = createPath(data);
 			RedBlackNode newNode(data);
 			newNode.parent = "NULL";
+			newNode.rowIndexes.push_back(rowIndex);
 			path = newPath;
 			newNode.color = BLACK;
 			newNode.updateFile(newPath);
@@ -263,6 +279,7 @@ class RedBlackTree {
 			RedBlackNode curr = RedBlackNode::readFile(path);
 			if (data == curr.data) {
 				curr.frequency++;
+				curr.rowIndexes.push_back(rowIndex);
 				curr.updateFile(path);
 				return;
 			}
@@ -271,6 +288,7 @@ class RedBlackTree {
 					filesystem::path newPath = createPath(data);
 					RedBlackNode newNode(data);
 					newNode.parent = path;
+					newNode.rowIndexes.push_back(rowIndex);
 					curr.left = newPath;
 					newNode.updateFile(newPath);
 					curr.updateFile(path);
@@ -278,7 +296,7 @@ class RedBlackTree {
 					return;
 				}
 				else {
-					insertNode(curr.left, data);
+					insertNode(curr.left, data, rowIndex);
 				}
 			}
 			else if (data > curr.data) {
@@ -286,6 +304,7 @@ class RedBlackTree {
 					filesystem::path newPath = createPath(data);
 					RedBlackNode newNode(data);
 					newNode.parent = path;
+					newNode.rowIndexes.push_back(rowIndex);
 					curr.right = newPath;
 					newNode.updateFile(newPath);
 					curr.updateFile(path);
@@ -293,7 +312,7 @@ class RedBlackTree {
 					return;
 				}
 				else {
-					insertNode(curr.right, data);
+					insertNode(curr.right, data, rowIndex);
 				}
 			}
 		}
@@ -309,7 +328,7 @@ class RedBlackTree {
 			node.updateFile(path);
 			return;
 		}
-		else if (path != root) {
+		else if (path != rootPath) {
 			filesystem::path parentPath = node.parent;
 			parent = RedBlackNode::readFile(parentPath);
 
@@ -423,14 +442,14 @@ class RedBlackTree {
 						parent.color = BLACK;
 						parent.updateFile(parentPath);
 					}
-					else if (parent.color == BLACK && parentPath != root)
+					else if (parent.color == BLACK && parentPath != rootPath)
 					{
 						fixDebt(parentPath);
 					}
 				}
 			}
 		}
-		if (path == root) {
+		if (path == rootPath) {
 			node.color = BLACK;
 			node.updateFile(path);
 			return;
@@ -455,29 +474,42 @@ class RedBlackTree {
 			node.updateFile(path);
 			return;
 		}
-		else if(path != root && hasDebt)
+		else if(path != rootPath && hasDebt)
 		{
 			fixDebt(path);
 		}
 	}
-	void removeNode(filesystem::path& path, const T& data) {
+	void removeNode(filesystem::path& path, const T& data, const long long& rowIndex) {
 		if (path.empty() || path == "NULL")
 		{
-			cout << "Unable to find value..Does not exist\n";
+			cout << "Unable to find key..Does not exist\n";
 			return;
 		}
 		RedBlackNode node = RedBlackNode::readFile(path);
 		if (data < node.data) {
-			removeNode(node.left, data);
+			removeNode(node.left, data, rowIndex);
 		}
 		else if (data > node.data) {
-			removeNode(node.right, data);
+			removeNode(node.right, data, rowIndex);
 		}
 		// found Node
 		else {
 			if (node.frequency > 1) {
-				node.frequency--;
-				node.updateFile(path);
+				bool found = 0;
+				for (int a = 0; a < node.rowIndexes.getCurr(); a++)
+				{
+					if (node.rowIndexes[a] == rowIndex)
+					{
+						node.rowIndexes.Destroy(a);
+						found = 1;
+						break;
+					}
+				}
+				if (found)
+				{
+					node.frequency--;
+					node.updateFile(path);
+				}
 				return;
 			}
 			int numofChildren = 0;
@@ -511,7 +543,7 @@ class RedBlackTree {
 				}
 				// No children
 				if (node.left == "NULL" && node.right == "NULL") {
-					if (path == root) {
+					if (path == rootPath) {
 						path = "NULL";
 						return;
 					}
@@ -519,7 +551,7 @@ class RedBlackTree {
 					{
 						filesystem::path parentPath = node.parent;
 						RedBlackNode parent = RedBlackNode::readFile(parentPath);
-						if (root != "NULL") {
+						if (rootPath != "NULL") {
 							if (parent.left == path) {
 								parent.left = "NULL";
 							}
@@ -587,12 +619,13 @@ class RedBlackTree {
 					}
 					node.data = successor.data;
 					node.frequency = successor.frequency;
+					node.rowIndexes = successor.rowIndexes;
 					node.hash = successor.hash;
 					node.updateFile(path);
 					filesystem::path updatedPath = createPath(successor.data);
 					successor.frequency = 1;
 					successor.updateFile(successorPath);
-					removeNode(node.left, successor.data);
+					removeNode(node.left, successor.data, rowIndex);
 
 					node = RedBlackNode::readFile(path);
 					filesystem::rename(path, updatedPath);
@@ -639,25 +672,41 @@ class RedBlackTree {
 		cout << node.data <<"("<<node.color<<" , "<<node.frequency<<")"<<endl;
 		inorderPrint(node.left, depth + 1);
 	}
-	filesystem::path root;
-	filesystem::path folderPath;
-
+	
 public:
-	filesystem::path Root()const { return root; }
-	RedBlackTree(filesystem::path folderPath,filesystem::path root = "NULL") :root(root),folderPath(folderPath) {}
+	filesystem::path Root()const { return rootPath; }
+	RedBlackTree(filesystem::path folderPath)
+	{
+		this->folderPath = folderPath;
+		this->rootPath = "NULL";
+		this->folderPath /= "REDBLACK";
+		if (!filesystem::exists(this->folderPath))
+		{
+			filesystem::create_directories(this->folderPath);
+			filesystem::path nodesPath = this->folderPath / "NODES";
+			filesystem::create_directories(nodesPath);
+		}
+	}
+	RedBlackTree(filesystem::path folderPath, filesystem::path rootPath)
+	{
+		this->folderPath = folderPath;
+		this->rootPath = rootPath;
+		if (!filesystem::exists(this->folderPath) || (!filesystem::exists(this->rootPath)))
+			throw runtime_error("Path does not exist.");
+	}
 	//===================================== UI Functions ==========================================
-	void insert(T value) {
-		insertNode(root, value);
+	void insert(const T& value, const long long& rowIndex) {
+		insertNode(this->rootPath, value, rowIndex);
 	}
 	
-	void remove(T value) {
-		if (root == "NULL") {
+	void remove(const T& value, const long long& rowIndex) {
+		if (rootPath == "NULL") {
 			throw runtime_error("Tree is Empty.");
 		}
-		removeNode(root, value);
+		removeNode(this->rootPath, value, rowIndex);
 	}
 	void print() {
-		inorderPrint(root);
+		inorderPrint(rootPath);
 	}
 	filesystem::path Search(filesystem::path root, T value) {
 		if (root == "NULL") {
@@ -678,4 +727,18 @@ public:
 			return root; 
 		}
 	}
+
+	void saveDataToFile()
+	{
+		ofstream file;
+		filesystem::path path = folderPath;
+		path += "\\RB_DATA.txt";
+		file.open(path);
+		if (!file.is_open())
+			throw runtime_error("Cannot open file: \'RB_DATA.txt\' for writing.");
+		file << rootPath << '\n';
+		file << folderPath << '\n';
+		file.close();
+	}
+
 };
