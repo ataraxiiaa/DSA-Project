@@ -19,7 +19,7 @@ int main()
 	tree1.remove(40);
 	tree1.remove(35);
 	tree1.remove(70);
-
+	tree1.remove(80);
 	tree1.printTree(tree1.getRoot());
 	// vector<int> deleteKeys = {25, 40, 30, 70, 80};
 	// for (int key : deleteKeys) {
