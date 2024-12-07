@@ -3,3 +3,5 @@ cmake-build-debug/
 .vs/
 AVLTree1_NODES/
 AVLTree2_NODES/
+/data.csv
+/healthcare_dataset.csv
