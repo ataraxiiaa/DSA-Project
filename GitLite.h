@@ -5,6 +5,7 @@
 #include "ParentTree.h"
 #include"AVL.h"
 #include"RedBlackTree.h"
+#include "Btree.h"
 #include"MerkleTree.h"
 #include "RowEntry.h"
 using namespace std;
@@ -129,7 +130,10 @@ public:
 			}
 			else if (treeType == 3)//BTree
 			{
-
+				cout << "Choose Degree for B-Tree: ";
+				int degree;
+				cin >> degree;
+				currentTree = new Btree<String>(currentBranch,degree);
 			}
 			String rowString;
 			long long rowIndex;
@@ -144,6 +148,7 @@ public:
 				RowEntry rowData;
 				rowData.readRow(rowIndex, rowString);
 				currentMerkle->insert(rowData);					//insert with index in merkle
+				cout << rowData.cells[colNumber] << endl;
 				currentTree->insert(rowData.cells[colNumber], rowIndex);	//insert data and index in tree
 			}
 			CSV.close();

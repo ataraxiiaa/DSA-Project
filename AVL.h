@@ -644,6 +644,7 @@ public:
 		}
 		else
 		{
+			cout << "Found: \n";
 			return node.rowIndexes;
 		}
 	}

@@ -782,6 +782,7 @@ public:
 		file << branchPath << '\n';
 		file.close();
 	}
+	// Load data from file
 	void loadFromBranch(path branchPath)
 	{
 		branchPath /= "TREE";
