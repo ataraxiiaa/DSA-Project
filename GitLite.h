@@ -15,7 +15,7 @@ private:
 	filesystem::path repoPath;
 	filesystem::path CSVPath;
 	int colNumber;
-	int treeType;//1=AVL, 2=RB, 3=BTree
+	int treeType;					//1=AVL, 2=RB, 3=BTree
 	filesystem::path currentBranch;
 	Vector<filesystem::path> branches;
 	MerkleTree* currentMerkle;
@@ -584,7 +584,7 @@ public:
 			RowEntry updatedRow = this->currentMerkle->searchRowEntry(indexes[choice]);
 			updatedRow.cells[field] = newField;
 			storeChange("UPDATE", updatedRow, field);
-			cout << "Entry: " << choice << " removed" << endl;
+			cout << "Entry: " << choice << " updated" << endl;
 		}
 	}
 	void storeChange(const String& operation, RowEntry& op, int fieldIndex=-1)
@@ -612,5 +612,134 @@ public:
 			file << op.rowIndex << ',' << op << '\n';
 		}
 	}
-	
+	void commit()
+	{
+		if (!exists(currentBranch / "temp"))
+		{
+			cout << "No changes to commit." << endl;
+			return;
+		}
+		cout << "Enter message: ";
+		path message;
+		String messagestr;
+		getline(cin, messagestr);
+		message = messagestr.getData();
+
+		while (exists(currentBranch / message))
+		{
+			cout << "This commit exists, enter new message: ";
+			message.clear();
+			cin >> message;
+		}
+
+		//create commits folder
+		if (!exists(currentBranch / "COMMITS"))
+		{
+			create_directories(currentBranch / "COMMITS");
+		}
+		//create the current commit message folder
+		create_directories(currentBranch / "COMMITS"/ message);
+
+		//store commit history in file
+		ofstream file(currentBranch / "COMMITS" / "COMMIT_DATA.txt", ios::app);
+		if (!file.is_open())
+			throw runtime_error("Failed to open COMMIT_DATA.txt file.");
+		file << ("COMMITS" / message) << '\n';
+		file.close();
+
+		//cut paste changes file to current commit folder
+		path changesFile = currentBranch / "temp" / "CHANGES.txt";
+		filesystem::copy(changesFile, currentBranch / "COMMITS" / message / changesFile.filename(), filesystem::copy_options::overwrite_existing);
+		filesystem::remove_all(currentBranch/"temp");
+
+		//apply changes
+		changesFile = currentBranch / "COMMITS" / message / "CHANGES.txt";
+		ifstream ifile(changesFile);
+		if (!ifile.is_open())
+			throw runtime_error("Failed to open CHANGES.txt file.");
+
+		String operation;
+		String row;
+		int fieldIndex;
+		long long rowIndex;
+		char delim;
+		while (getline(ifile, operation))
+		{
+			if (operation == "INSERT")
+			{
+				//read row
+				ifile >> rowIndex >> delim;
+				getline(ifile, row);
+				rowIndex = currentMerkle->getCounter();
+				RowEntry rowData;
+				rowData.readRow(rowIndex, row);
+
+				currentMerkle->insert(rowData);								//insert with index in merkle
+				currentTree->insert(rowData.cells[colNumber], rowIndex);	//insert data and index in tree
+				currentMerkle->saveDataToFile();
+				currentTree->saveDataToFile();
+			}
+			else if (operation == "REMOVE")
+			{
+				//read row
+				ifile >> rowIndex >> delim;
+				getline(ifile, row);
+				RowEntry rowData;
+				rowData.readRow(rowIndex, row);
+
+				//remove from both trees
+				currentMerkle->remove(rowIndex);
+				currentTree->remove(rowData.cells[colNumber], rowIndex);
+				currentMerkle->saveDataToFile();
+				currentTree->saveDataToFile();
+			}
+			else if (operation == "UPDATE")
+			{
+				//read the updated field's index
+				ifile >> fieldIndex;
+				ifile.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+
+				//read row
+				ifile >> rowIndex >> delim;
+				getline(ifile, row);
+				RowEntry rowData;
+				rowData.readRow(rowIndex, row);
+
+				//update AVL/RB/Btree if updated field is chosen column number
+				if (fieldIndex == this->colNumber)
+				{
+					this->currentTree->remove(this->currentMerkle->searchRowEntry(rowIndex).cells[fieldIndex], rowIndex);
+					this->currentTree->insert(rowData.cells[fieldIndex], rowIndex);
+				}
+				//update merkle
+				this->currentMerkle->update(rowIndex, fieldIndex, rowData.cells[fieldIndex]);
+				currentTree->saveDataToFile();
+			}
+			else if (operation == "")
+				break;
+			
+		}
+		cout << "Changes commited." << endl;
+	}
+
+	void log()
+	{
+		if (!exists(currentBranch / "COMMITS" / "COMMIT_DATA.txt"))
+		{
+			cout << "No commits saved." << endl;
+			return;
+		}
+		ifstream file(currentBranch / "COMMITS" / "COMMIT_DATA.txt");
+		if (!file.is_open())
+			throw runtime_error("Failed to open COMMIT_DATA.txt file.");
+		path currCommit;
+		int counter = 1;
+		while (true)
+		{
+			file >> currCommit;
+			if (file.eof() || currCommit.empty())
+				break;
+			cout << "Commit # " << counter++ << ": " << currCommit.filename() << endl;
+		}
+	}
 };

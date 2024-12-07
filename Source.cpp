@@ -73,6 +73,14 @@ int main()
 		{
 			git.update();
 		}
+		else if (input == "commit")
+		{
+			git.commit();
+		}
+		else if (input == "log")
+		{
+			git.log();
+		}
 		else if (input == "exit")
 		{
 			break;

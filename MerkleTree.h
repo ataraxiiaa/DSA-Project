@@ -511,6 +511,24 @@ private:
 			return currentNode;
 		}
 	}
+	void helperUpdate(const filesystem::path& root,const long long& index, const int& fieldIndex, const String& newValue)
+	{
+		if (root == "NULL")
+			return;
+		Node currentNode = Node::readFile(root, *this);
+
+		if (index < currentNode.index) {
+			helperUpdate(currentNode.left, index, fieldIndex, newValue);
+		}
+		else if (index > currentNode.index) {
+			helperUpdate(currentNode.right, index, fieldIndex, newValue);
+		}
+		else 
+		{
+			currentNode.rowData.cells[fieldIndex] = newValue;
+			currentNode.updateFile(root);
+		}
+	}
 	long long staticCounter = 0;
 public:
 
@@ -670,7 +688,10 @@ public:
 		Node node = this->helperSearch(this->rootPath, data);
 		return node.rowData;
 	}
-
+	void update(const long long& index, const int& fieldIndex, const String& newValue)
+	{
+		helperUpdate(this->rootPath, index, fieldIndex, newValue);
+	}
 
 };
 
