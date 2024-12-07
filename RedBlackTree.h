@@ -508,7 +508,6 @@ class RedBlackTree: public ParentTree<T> {
 	void removeNode(filesystem::path& path, const T& data, const long long& rowIndex) {
 		if (path.empty() || path == "NULL")
 		{
-			cout << "Unable to find key..Does not exist\n";
 			return;
 		}
 		Node node = Node::readFile(path, *this);

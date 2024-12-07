@@ -375,7 +375,6 @@ private:
 		//didnt find element
 		if (path.empty() || path == "NULL")
 		{
-			cout << "ERROR IN DELETION: Key \'" << data << "\' does not exist." << endl;
 			return;
 		}
 
@@ -434,7 +433,7 @@ private:
 						updateNodeHeight(node.parent);
 					}
 					removeFile(path);
-					path = "NULL";
+					path = node.right;
 					return;
 				}
 
@@ -455,7 +454,7 @@ private:
 						updateNodeHeight(node.parent);
 					}
 					removeFile(path);
-					path = "NULL";
+					path = node.left;
 					return;
 				}
 

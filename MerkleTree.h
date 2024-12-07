@@ -357,7 +357,6 @@ private:
 		//didnt find element
 		if (path.empty() || path == "NULL")
 		{
-			cout << "ERROR IN DELETION: Key \'" << index << "\' does not exist." << endl;
 			return;
 		}
 

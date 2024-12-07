@@ -81,6 +81,10 @@ int main()
 		{
 			git.log();
 		}
+		else if (input == "merge")
+		{
+			git.merge();
+		}
 		else if (input == "exit")
 		{
 			break;

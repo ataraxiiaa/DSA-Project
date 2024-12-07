@@ -21,6 +21,75 @@ private:
 	MerkleTree* currentMerkle;
 	ParentTree<String>* currentTree;
 
+	//applies changes from changesFile to current trees
+	void applyChanges(path changesFile)
+	{
+		ifstream ifile(changesFile);
+		if (!ifile.is_open())
+			throw runtime_error("Failed to open CHANGES.txt file.");
+
+		String operation;
+		String row;
+		int fieldIndex;
+		long long rowIndex;
+		char delim;
+		while (getline(ifile, operation))
+		{
+			if (operation == "INSERT")
+			{
+				//read row
+				ifile >> rowIndex >> delim;
+				getline(ifile, row);
+				rowIndex = currentMerkle->getCounter();
+				RowEntry rowData;
+				rowData.readRow(rowIndex, row);
+
+				currentMerkle->insert(rowData);								//insert with index in merkle
+				currentTree->insert(rowData.cells[colNumber], rowIndex);	//insert data and index in tree
+				currentMerkle->saveDataToFile();
+				currentTree->saveDataToFile();
+			}
+			else if (operation == "REMOVE")
+			{
+				//read row
+				ifile >> rowIndex >> delim;
+				getline(ifile, row);
+				RowEntry rowData;
+				rowData.readRow(rowIndex, row);
+
+				//remove from both trees
+				currentMerkle->remove(rowIndex);
+				currentTree->remove(rowData.cells[colNumber], rowIndex);
+				currentMerkle->saveDataToFile();
+				currentTree->saveDataToFile();
+			}
+			else if (operation == "UPDATE")
+			{
+				//read the updated field's index
+				ifile >> fieldIndex;
+				ifile.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+
+				//read row
+				ifile >> rowIndex >> delim;
+				getline(ifile, row);
+				RowEntry rowData;
+				rowData.readRow(rowIndex, row);
+
+				//update AVL/RB/Btree if updated field is chosen column number
+				if (fieldIndex == this->colNumber)
+				{
+					this->currentTree->remove(this->currentMerkle->searchRowEntry(rowIndex).cells[fieldIndex], rowIndex);
+					this->currentTree->insert(rowData.cells[fieldIndex], rowIndex);
+				}
+				//update merkle
+				this->currentMerkle->update(rowIndex, fieldIndex, rowData.cells[fieldIndex]);
+				currentTree->saveDataToFile();
+			}
+			else if (operation == "")
+				break;
+
+		}
+	}
 public:
 	GitLite(): colNumber(-1), currentMerkle(nullptr), currentTree(nullptr), treeType(-1)
 	{}
@@ -278,6 +347,178 @@ public:
 			}
 			cout << "Error: branch not found." << endl;
 		}
+	}
+	void merge()
+	{
+		//input the other branch
+		cout << "Enter name of branch to merge into current branch: ";
+		path otherBranch;
+		cin >> otherBranch;
+		otherBranch = repoPath / otherBranch;
+		if (!exists(otherBranch))
+		{
+			cout << "Branch does not exist." << endl;
+			return;
+		}
+		if (otherBranch == currentBranch)
+		{
+			cout << "Cannot merge a branch into itself." << endl;
+			return;
+		}
+
+		//store current branch commits in vector
+		path currentBranchCommitFile=currentBranch/"COMMITS"/"COMMIT_DATA.txt";
+		Vector<path> currentBranchCommits;
+		if (exists(currentBranchCommitFile))
+		{
+			ifstream file(currentBranchCommitFile);
+			if (!file.is_open())
+				throw runtime_error("Cannot open current branch commit file.");
+			path temp;
+			while (true)
+			{
+				file >> temp;
+				if (file.eof() || temp.empty())
+					break;
+				currentBranchCommits.push_back(temp);
+			}
+		}
+
+		//store other branch's commits in vector
+		path otherBranchCommitFile = otherBranch / "COMMITS" / "COMMIT_DATA.txt";
+		Vector<path> otherBranchCommits;
+		if (exists(otherBranchCommitFile))
+		{
+			ifstream file(otherBranchCommitFile);
+			if (!file.is_open())
+				throw runtime_error("Cannot open other branch commit file.");
+			path temp;
+			while (true)
+			{
+				file >> temp;
+				if (file.eof() || temp.empty())
+					break;
+				otherBranchCommits.push_back(temp);
+			}
+		}
+
+		//simply delete other branch if there are no commits in it
+		if (otherBranchCommits.getCurr() == 0)
+		{
+			for (int a = 0; a < branches.getCurr(); a++)
+			{
+				if (branches[a] == otherBranch)
+				{
+					branches.Destroy(a);
+					filesystem::remove_all(otherBranch);
+					saveRepoToFile();
+					cout << "Branches merged." << endl;
+					return;
+				}
+			}
+		}
+
+		//if current commits are 0, apply all commits in other branch to current branch
+		if (currentBranchCommits.getCurr() == 0) 
+		{
+			//apply changes
+			for (int a = 0; a < otherBranchCommits.getCurr(); a++)
+			{
+				path changesFile = otherBranchCommits[a] / "CHANGES.txt";
+				applyChanges(changesFile);
+			}
+
+			//delete other branch
+			for (int a = 0; a < branches.getCurr(); a++)
+			{
+				if (branches[a] == otherBranch)
+				{
+					branches.Destroy(a);
+					filesystem::remove_all(otherBranch);
+					saveRepoToFile();
+					cout << "Branches merged." << endl;
+					return;
+				}
+			}
+		}
+
+		//find the commit where both branches diverge, then apply other branch's commits from there on
+		int firstUncommonCommitIndex = -1;
+		for (int a = 0; a < otherBranchCommits.getCurr() && a < currentBranchCommits.getCurr(); a++)
+		{
+			if (otherBranchCommits[a] != currentBranchCommits[a])
+			{
+				firstUncommonCommitIndex = a;
+				break;
+			}
+		}
+
+		//if no uncommon commit found till min(currBranchCommits, otherBranchCommits)
+		if (firstUncommonCommitIndex == -1)
+		{
+			//if current branch is ahead of /equal to other branch
+			if (currentBranchCommits.getCurr() >= otherBranchCommits.getCurr())
+			{
+				//delete other branch
+				for (int a = 0; a < branches.getCurr(); a++)
+				{
+					if (branches[a] == otherBranch)
+					{
+						branches.Destroy(a);
+						filesystem::remove_all(otherBranch);
+						saveRepoToFile();
+						cout << "Branches merged." << endl;
+						return;
+					}
+				}
+			}
+			//if current branch is behind other branch
+			else
+			{
+				//apply other branch changes from new commits onwards
+				for (int a = currentBranchCommits.getCurr(); a < otherBranchCommits.getCurr(); a++)
+				{
+					path changesFile = otherBranchCommits[a] / "CHANGES.txt";
+					applyChanges(changesFile);
+				}
+				//delete other branch
+				for (int a = 0; a < branches.getCurr(); a++)
+				{
+					if (branches[a] == otherBranch)
+					{
+						branches.Destroy(a);
+						filesystem::remove_all(otherBranch);
+						saveRepoToFile();
+						cout << "Branches merged." << endl;
+						return;
+					}
+				}
+			}
+		}
+		//found uncommon commit
+		else
+		{
+			//apply changes from uncommon commit onwards
+			for (int a = firstUncommonCommitIndex; a < otherBranchCommits.getCurr(); a++)
+			{
+				path changesFile = otherBranchCommits[a] / "CHANGES.txt";
+				applyChanges(changesFile);
+			}
+			//delete other branch
+			for (int a = 0; a < branches.getCurr(); a++)
+			{
+				if (branches[a] == otherBranch)
+				{
+					branches.Destroy(a);
+					filesystem::remove_all(otherBranch);
+					saveRepoToFile();
+					cout << "Branches merged." << endl;
+					return;
+				}
+			}
+		}
+
+		
 	}
 
 	void saveRepoToFile()
@@ -644,81 +885,18 @@ public:
 		ofstream file(currentBranch / "COMMITS" / "COMMIT_DATA.txt", ios::app);
 		if (!file.is_open())
 			throw runtime_error("Failed to open COMMIT_DATA.txt file.");
-		file << ("COMMITS" / message) << '\n';
+		file << (currentBranch / "COMMITS" / message) << '\n';
 		file.close();
 
-		//cut paste changes file to current commit folder
+		//paste temp folder's changes file to current commit folder
 		path changesFile = currentBranch / "temp" / "CHANGES.txt";
 		filesystem::copy(changesFile, currentBranch / "COMMITS" / message / changesFile.filename(), filesystem::copy_options::overwrite_existing);
 		filesystem::remove_all(currentBranch/"temp");
 
+
 		//apply changes
 		changesFile = currentBranch / "COMMITS" / message / "CHANGES.txt";
-		ifstream ifile(changesFile);
-		if (!ifile.is_open())
-			throw runtime_error("Failed to open CHANGES.txt file.");
-
-		String operation;
-		String row;
-		int fieldIndex;
-		long long rowIndex;
-		char delim;
-		while (getline(ifile, operation))
-		{
-			if (operation == "INSERT")
-			{
-				//read row
-				ifile >> rowIndex >> delim;
-				getline(ifile, row);
-				rowIndex = currentMerkle->getCounter();
-				RowEntry rowData;
-				rowData.readRow(rowIndex, row);
-
-				currentMerkle->insert(rowData);								//insert with index in merkle
-				currentTree->insert(rowData.cells[colNumber], rowIndex);	//insert data and index in tree
-				currentMerkle->saveDataToFile();
-				currentTree->saveDataToFile();
-			}
-			else if (operation == "REMOVE")
-			{
-				//read row
-				ifile >> rowIndex >> delim;
-				getline(ifile, row);
-				RowEntry rowData;
-				rowData.readRow(rowIndex, row);
-
-				//remove from both trees
-				currentMerkle->remove(rowIndex);
-				currentTree->remove(rowData.cells[colNumber], rowIndex);
-				currentMerkle->saveDataToFile();
-				currentTree->saveDataToFile();
-			}
-			else if (operation == "UPDATE")
-			{
-				//read the updated field's index
-				ifile >> fieldIndex;
-				ifile.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
-
-				//read row
-				ifile >> rowIndex >> delim;
-				getline(ifile, row);
-				RowEntry rowData;
-				rowData.readRow(rowIndex, row);
-
-				//update AVL/RB/Btree if updated field is chosen column number
-				if (fieldIndex == this->colNumber)
-				{
-					this->currentTree->remove(this->currentMerkle->searchRowEntry(rowIndex).cells[fieldIndex], rowIndex);
-					this->currentTree->insert(rowData.cells[fieldIndex], rowIndex);
-				}
-				//update merkle
-				this->currentMerkle->update(rowIndex, fieldIndex, rowData.cells[fieldIndex]);
-				currentTree->saveDataToFile();
-			}
-			else if (operation == "")
-				break;
-			
-		}
+		applyChanges(changesFile);
 		cout << "Changes commited." << endl;
 	}
 
