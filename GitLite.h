@@ -397,6 +397,11 @@ public:
 			currentColumn = "";
 			cout << colNames[a] << ": ";
 			getline(cin, currentColumn);
+			for (int a = 0; a < currentColumn.getSize(); a++)
+			{
+				if (isAlphabet(currentColumn[a]))
+					currentColumn.getData()[a] = convertToUppercase(currentColumn[a]);
+			}
 			newRow.cells.push_back(currentColumn);
 		}
 		newRow.rowIndex = -1;
@@ -409,6 +414,11 @@ public:
 		cout << "Enter key to search: ";
 		String input;
 		getline(cin, input);
+		for (int a = 0; a < input.getSize(); a++)
+		{
+			if (isAlphabet(input[a]))
+				input.getData()[a] = convertToUppercase(input[a]);
+		}
 		Vector<long long> indexes=this->currentTree->search(input);
 		if (indexes.getCurr() == 0)
 			return;
@@ -417,7 +427,167 @@ public:
 			cout << "Entry " << a << ": " << this->currentMerkle->search(indexes[a])<<endl;
 		}
 	}
-	void storeChange(const String& operation, RowEntry& op)
+	void remove()
+	{
+		cout << "Enter key to remove: ";
+		String input;
+		getline(cin, input);
+		for (int a = 0; a < input.getSize(); a++)
+		{
+			if (isAlphabet(input[a]))
+				input.getData()[a] = convertToUppercase(input[a]);
+		}
+		Vector<long long> indexes = this->currentTree->search(input);
+		if (indexes.getCurr() == 0)
+			return;
+		for (int a = 0; a < indexes.getCurr(); a++)
+		{
+			cout << "Entry " << a << ": " << this->currentMerkle->search(indexes[a]) << endl;
+		}
+
+		cout << "\n1: remove all instances" << endl;
+		cout << "2: remove a specific instance" << endl;
+		cout << "Enter choice: ";
+		int choice=0;
+		cin >> choice;
+		while (choice != 1 && choice != 2)
+		{
+			cout << "Invalid choice. Enter again: ";
+			cin >> choice;
+		}
+		if (choice == 1)
+		{
+			for (int a = 0; a < indexes.getCurr(); a++)
+			{
+				RowEntry deletedRow = this->currentMerkle->searchRowEntry(indexes[a]);
+				storeChange("REMOVE", deletedRow);
+				cout << "Entry: " << a << " removed" << endl;
+			}
+		}
+		else if (choice == 2)
+		{
+			cout << "Enter index of entry to remove: ";
+			cin >> choice;
+			while (choice < 0 || choice >= indexes.getCurr())
+			{
+				cout << "Invalid index. Choose within range: ";
+				cin >> choice;
+			}
+			RowEntry deletedRow = this->currentMerkle->searchRowEntry(indexes[choice]);
+			storeChange("REMOVE", deletedRow);
+			cout << "Entry: " << choice << " removed" << endl;
+		}
+	}
+	void update()
+	{
+		//read key and display all instances of that key
+		cout << "Enter key to update: ";
+		String input;
+		getline(cin, input);
+		for (int a = 0; a < input.getSize(); a++)
+		{
+			if (isAlphabet(input[a]))
+				input.getData()[a] = convertToUppercase(input[a]);
+		}
+		Vector<long long> indexes = this->currentTree->search(input);
+		if (indexes.getCurr() == 0)
+			return;
+		for (int a = 0; a < indexes.getCurr(); a++)
+		{
+			cout << "Entry " << a << ": " << this->currentMerkle->search(indexes[a]) << endl;
+		}
+
+		//ask if update all instances or only 1
+		cout << "\n1: update all instances" << endl;
+		cout << "2: update a specific instance" << endl;
+		cout << "Enter choice: ";
+		int choice = 0;
+		cin >> choice;
+		while (choice != 1 && choice != 2)
+		{
+			cout << "Invalid choice. Enter again: ";
+			cin >> choice;
+		}
+
+
+		//read header of CSV
+		fstream CSV(CSVPath);
+		if (!CSV.is_open()) {
+			std::cerr << "Error: Could not open file." << std::endl;
+			return;
+		}
+		String header;
+		getline(CSV, header);
+		Vector<String> colNames;
+		String currentColumn;
+		for (int a = 0; a < header.getSize(); a++)
+		{
+			if (header[a] != ',')
+			{
+				currentColumn += header[a];
+			}
+			else
+			{
+				colNames.push_back(currentColumn);
+				currentColumn = "";
+			}
+		}
+		if (!(currentColumn == ""))
+			colNames.push_back(currentColumn);
+
+
+		//ask for field that has to be updated
+		cout << endl;
+		for (int a = 0; a < colNames.getCurr(); a++)
+		{
+			cout << a << ": " << colNames[a] << endl;
+		}
+		int field = -1;
+		cout << "Enter field to update: ";
+		cin >> field;
+		while (field < 0 || field >= colNames.getCurr())
+		{
+			cout << "Invalid index. Enter within range: ";
+			cin >> field;
+		}
+
+		//enter the new value of the replacement
+		String newField;
+		cout << "Enter new value of field: ";
+		cin.ignore(numeric_limits<streamsize>::max(), '\n');
+		getline(cin, newField);
+		for (int a = 0; a < newField.getSize(); a++)
+		{
+			if (isAlphabet(newField[a]))
+				newField.getData()[a] = convertToUppercase(newField[a]);
+		}
+
+		if (choice == 1)
+		{
+			for (int a = 0; a < indexes.getCurr(); a++)
+			{
+				RowEntry updatedRow = this->currentMerkle->searchRowEntry(indexes[a]);
+				updatedRow.cells[field] = newField;
+				storeChange("UPDATE", updatedRow, field);
+				cout << "Entry: " << a << " updated" << endl;
+			}
+		}
+		else if (choice == 2)
+		{
+			cout << "Enter index of entry to update: ";
+			cin >> choice;
+			while (choice < 0 || choice >= indexes.getCurr())
+			{
+				cout << "Invalid index. Choose within range: ";
+				cin >> choice;
+			}
+			RowEntry updatedRow = this->currentMerkle->searchRowEntry(indexes[choice]);
+			updatedRow.cells[field] = newField;
+			storeChange("UPDATE", updatedRow, field);
+			cout << "Entry: " << choice << " removed" << endl;
+		}
+	}
+	void storeChange(const String& operation, RowEntry& op, int fieldIndex=-1)
 	{
 		path tempFolder = this->currentBranch / "temp";
 		if (!exists(tempFolder))
@@ -426,10 +596,21 @@ public:
 		}
 		path changesFile = tempFolder / "CHANGES.txt";
 		ofstream file(changesFile, ios::app);
-		if (!file.is_open()) 
+		if (!file.is_open())
 			throw runtime_error("Failed to open CHANGES.txt file.");
-		file << operation << '\n';
-		file << op.rowIndex << ',' << op << '\n';
+
+
+		if (operation == "UPDATE")
+		{
+			file << operation << '\n';
+			file << fieldIndex << '\n';
+			file << op.rowIndex << ',' << op << '\n';
+		}
+		else
+		{
+			file << operation << '\n';
+			file << op.rowIndex << ',' << op << '\n';
+		}
 	}
 	
 };

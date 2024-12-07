@@ -108,4 +108,15 @@ struct RowEntry
             cells.push_back(parseField(row, index));
         }
     }
+    String toString()
+    {
+        String row;
+        for (int a = 0; a < cells.getCurr(); a++)
+        {
+            if (a > 0)
+                row += ',';
+            row += cells[a];
+        }
+        return row;
+    }
 };

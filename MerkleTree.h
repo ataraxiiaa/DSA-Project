@@ -78,6 +78,7 @@ private:
 			file >> node.height;
 			file.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
 			file >> node.rowData;
+			node.rowData.rowIndex = node.index;
 			getline(file, node.hash);
 
 			filesystem::path temp;
@@ -663,6 +664,11 @@ public:
 			curr += node.rowData.cells[a];
 		}
 		return curr;
+	}
+	RowEntry searchRowEntry(long long& data)
+	{
+		Node node = this->helperSearch(this->rootPath, data);
+		return node.rowData;
 	}
 
 

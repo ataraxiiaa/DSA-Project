@@ -65,6 +65,14 @@ int main()
 		{
 			git.search();
 		}
+		else if (input == "remove")
+		{
+			git.remove();
+		}
+		else if (input == "update")
+		{
+			git.update();
+		}
 		else if (input == "exit")
 		{
 			break;
