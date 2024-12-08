@@ -5,7 +5,7 @@
 #include <fstream>
 #include<filesystem>
 using namespace std;
-
+int hashTypeGlobal;
 class MerkleTree
 {
 private:
@@ -40,6 +40,43 @@ private:
 			}
 			return result;
 		}
+
+		//helper to calc hash
+		String calculateHash(String& input)
+		{
+			String resString;
+			if (::hashTypeGlobal == 1)
+			{
+				long long res = 1;
+				for (int a = 0; a < input.getSize(); a++)
+				{
+					res *= input[a];
+					res = res % 29;
+				}
+				int firstChar = res / 10;
+				resString += (firstChar + '0');
+				int secondChar = res % 10;
+				resString += (secondChar + '0');
+				return resString;
+			}
+		}
+
+		void updateHash(const filesystem::path& leftPath, const filesystem::path& rightPath, const MerkleTree& merc)
+		{
+			String data = rowData.toString();
+
+			if (leftPath != "NULL") {
+				Node leftNode = readFile(leftPath, merc);
+				data += leftNode.hash;
+			}
+			if (rightPath != "NULL") {
+				Node rightNode = readFile(rightPath, merc);
+				data += rightNode.hash;
+			}
+
+			this->hash = calculateHash(data);
+		}
+
 
 		void updateFile(const filesystem::path& path)
 		{
@@ -162,6 +199,7 @@ private:
 		int rightHeight = Height(node.right);
 
 		node.height = max(leftHeight, rightHeight) + 1;
+		node.updateHash(node.left, node.right, *this);
 		node.updateFile(path);
 		return;
 	}
@@ -318,6 +356,7 @@ private:
 			Node newNode(staticCounter,row);
 			newNode.parent = parentPath;
 			path = newFilePath;
+			newNode.updateHash(newNode.left, newNode.right, *this);
 			newNode.updateFile(newFilePath);
 			long long temp = staticCounter;
 			staticCounter++;
@@ -339,6 +378,7 @@ private:
 			{
 				return staticCounter;
 			}
+			current.updateHash(current.left, current.right, *this);
 			current.updateFile(path);
 			updateNodeHeight(path);
 
@@ -464,6 +504,8 @@ private:
 					path = updatedPath;
 				}
 		}
+		node.updateHash(node.left, node.right, *this);
+		node.updateFile(path);
 		//rolling back after deletion, balance any imbalanced nodes
 		int BF = balanceFactor(path);
 		if (BF >= 2 || BF <= -2)
@@ -489,7 +531,7 @@ private:
 		{
 			cout << '\t';
 		}
-		cout << node.index << endl;
+		cout << node.index <<"("<<node.hash<<")"<< endl;
 		inorderPrint(node.left, depth + 1);
 	}
 
@@ -525,10 +567,14 @@ private:
 		else 
 		{
 			currentNode.rowData.cells[fieldIndex] = newValue;
+			currentNode.updateHash(currentNode.left, currentNode.right, *this);
 			currentNode.updateFile(root);
+			return;
 		}
+		currentNode.updateHash(currentNode.left, currentNode.right, *this);
+		currentNode.updateFile(root);
 	}
-	long long staticCounter = 0;
+	static long long staticCounter;
 public:
 
 
@@ -693,5 +739,5 @@ public:
 	}
 
 };
-
+long long MerkleTree::staticCounter=0;
 

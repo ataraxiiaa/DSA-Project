@@ -16,6 +16,7 @@ private:
 	filesystem::path CSVPath;
 	int colNumber;
 	int treeType;					//1=AVL, 2=RB, 3=BTree
+	int hashType;					//1= instructor, 2=SHA
 	filesystem::path currentBranch;
 	Vector<filesystem::path> branches;
 	MerkleTree* currentMerkle;
@@ -142,6 +143,17 @@ public:
 				cout << "Invalid option. Choose again: ";
 				cin >> treeType;
 			}
+
+			cout << "1: Instructor hash\n";
+			cout << "2: SHA-256\n";
+			cout << "Enter hash choice: ";
+			cin >> hashType;
+			while (hashType != 1 && hashType != 2)
+			{
+				cout << "Choose within range: ";
+				cin >> hashType;
+			}
+			::hashTypeGlobal = hashType;
 
 
 			//read file
@@ -532,6 +544,7 @@ public:
 		file << CSVPath << '\n';
 		file << colNumber << '\n';
 		file << treeType << '\n';
+		file << hashType << '\n';
 		file << currentBranch << '\n';
 		file << branches.getCurr() << '\n';
 		for (int a = 0; a < branches.getCurr(); a++)
@@ -564,7 +577,9 @@ public:
 		file.ignore(numeric_limits<streamsize>::max(), '\n');
 		file >> treeType;
 		file.ignore(numeric_limits<streamsize>::max(), '\n');
-
+		file >> hashType;
+		::hashTypeGlobal = hashType;
+		file.ignore(numeric_limits<streamsize>::max(), '\n');
 		file >> currentBranch;
 		int branchCount;
 		file >> branchCount;
@@ -920,4 +935,9 @@ public:
 			cout << "Commit # " << counter++ << ": " << currCommit.filename() << endl;
 		}
 	}
+	void printMerc()
+	{
+		this->currentMerkle->print();
+	}
 };
+

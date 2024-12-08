@@ -19,6 +19,10 @@ int main()
 		{
 			git.printCurrentTree();
 		}
+		else if (input == "print-merc")
+		{
+			git.printMerc();
+		}
 		else if (input == "current-branch")
 		{
 			git.printCurrentBranch();
