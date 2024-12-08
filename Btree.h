@@ -329,15 +329,14 @@ class Btree : public ParentTree<T>
         else {
             // Locate the appropriate node for insertion
             Pair<filesystem::path, int, int> toBeInserted = searchNode(value);
-
+			Pair<filesystem::path, int, int> exists = searchNode_Deletion(value);
             filesystem::path currPath = toBeInserted.first;
             Node node = Node::LoadFromFile(currPath,*this);
 
-			// If the key already exists, update the index
-            if (toBeInserted.second == -1) {
-				node.keys[toBeInserted.third].indexes.push_back(rowIndex);
-                node.saveToFile(currPath);
-                return;
+            if (exists.second != -1) {
+				node.keys[exists.second].indexes.push_back(rowIndex);
+				node.saveToFile(currPath);
+				return;
             }
             // Insert the new key
             Key newKey;
@@ -609,6 +608,12 @@ class Btree : public ParentTree<T>
         }
 		// load the node to be removed
         Node node = Node::LoadFromFile(toBeRemoved.first, *this);
+        if (node.keys.getCurr() > 1) {
+			// if the node has more than 1 key
+			node.keys.Destroy(toBeRemoved.second);
+			node.saveToFile(toBeRemoved.first);
+            return;
+        }
 		// removing just leaf key from the tree
         if (node.parent == "NULL" && node.isLeaf) {
 			// if the node is the root and is a leaf

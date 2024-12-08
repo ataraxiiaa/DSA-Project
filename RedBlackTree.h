@@ -7,6 +7,15 @@
 using namespace std;
 using namespace std::filesystem;
 
+/*
+		RED-BLACK TREE
+		The class follows the basic principles for redblack tree
+		the class contains a node struct and all the functions required to perform operations on the tree
+		All the functions are encapsulated and are private
+		The class is a template class and can be used with any data type
+		The approach follows the double black node approach for deletion
+
+*/
 enum NodeColor {
 	RED, // 0
 	BLACK // 1
@@ -343,15 +352,17 @@ class RedBlackTree: public ParentTree<T> {
 			}
 		}
 	}
+	// function to fix the debt of the tree
 	void fixDebt(filesystem::path& path) {
-		if (path == "NULL" ) return;
+		if (path == "NULL") return; // if the path is null return
+
 		Node parent;
 		Node sibling;
 		Node node = Node::readFile(path, *this);
 
-		if (node.color == RED) {
-			node.color = BLACK;
-			node.updateFile(path);
+		if (node.color == RED) { // if the node is red
+			node.color = BLACK; // change the color to black
+			node.updateFile(path); // update and return
 			return;
 		}
 		else if (path != rootPath) {
@@ -491,36 +502,38 @@ class RedBlackTree: public ParentTree<T> {
 			return;
 		}
 	}
-
+	// function used to fix the orientation of the tree after deletion and fix any violations of redblack tree
 	void fixOrientation_Deletion(filesystem::path& path, bool hasDebt) {
 		if (path == "NULL") return;
 		Node node = Node::readFile(path, *this);
-		if (node.color == RED) {
+		if (node.color == RED) { // removal was of a red node
 			node.color = BLACK;
-			node.updateFile(path);
+			node.updateFile(path); // simply change the color to black
 			return;
 		}
 		else if(path != rootPath && hasDebt)
 		{
+			// the case where the node has debt comes
 			fixDebt(path);
 		}
 	}
+	// Remove a node from the tree
 	void removeNode(filesystem::path& path, const T& data, const long long& rowIndex) {
-		if (path.empty() || path == "NULL")
+		if (path.empty() || path == "NULL") // tree empty
 		{
 			cout << "Unable to find key..Does not exist\n";
 			return;
 		}
-		Node node = Node::readFile(path, *this);
+		Node node = Node::readFile(path, *this); // Read the node
 		if (data < node.data) {
-			removeNode(node.left, data, rowIndex);
+			removeNode(node.left, data, rowIndex); // traverse to find the node
 		}
 		else if (data > node.data) {
 			removeNode(node.right, data, rowIndex);
 		}
 		// found Node
 		else {
-			if (node.frequency > 1) {
+			if (node.frequency > 1) { // if the node has multiple instances
 				bool found = 0;
 				for (int a = 0; a < node.rowIndexes.getCurr(); a++)
 				{
@@ -531,7 +544,7 @@ class RedBlackTree: public ParentTree<T> {
 						break;
 					}
 				}
-				if (found)
+				if (found) // if the node is found
 				{
 					node.frequency--;
 					node.updateFile(path);
@@ -546,11 +559,13 @@ class RedBlackTree: public ParentTree<T> {
 				if ((node.left != "NULL" && node.right == "NULL") ||
 					(node.right != "NULL" && node.left == "NULL") ||
 					node.right == "NULL" && node.left == "NULL") {
+					// mark debt if it borrows from a black node
 					if (node.color == BLACK) {
 						if (node.left == "NULL" && node.right == "NULL") {
 							node.debt = true;
-							node.updateFile(path);
+							node.updateFile(path); // basically NULL is also black so marks debt black
 						}
+						// any one of the child is black
 						else if (node.left != "NULL") {
 							Node temp = Node::readFile(node.left, *this);
 							if (temp.color == BLACK) {
@@ -569,14 +584,17 @@ class RedBlackTree: public ParentTree<T> {
 				}
 				// No children
 				if (node.left == "NULL" && node.right == "NULL") {
+					// if the node is the root
 					if (path == rootPath) {
 						path = "NULL";
 						return;
 					}
 					else if(node.color == RED)
 					{
+						// if the node is red just simply remove it
 						filesystem::path parentPath = node.parent;
 						Node parent = Node::readFile(parentPath, *this);
+						// sets parent left or right to NULL
 						if (rootPath != "NULL") {
 							if (parent.left == path) {
 								parent.left = "NULL";
@@ -586,36 +604,43 @@ class RedBlackTree: public ParentTree<T> {
 							}
 							parent.updateFile(parentPath);
 						}
+						// remove the file
 						removeFile(path);
 						path = "NULL";
 						return;
 					}
+					// fixing orientation in case 2 blacks are joined together due to deletion
 					fixOrientation_Deletion(path, node.debt);
-					cout << path << endl;
+					// cout << path << endl;
 					return;
 					/*removeFile(path);
 					return;*/
 				}
 				// 1 children
+				// right child
 				else if (node.left == "NULL") {
+					// checking if node left or right
 					if (node.right != "NULL")
 					{
+						// reads the necassary nodes 
 						Node right = Node::readFile(node.right, *this);
 						right.parent = node.parent;
 						right.updateFile(node.right);
 					}
 					if (node.parent != "NULL")
 					{
+						// reading the necassary nodes
 						Node parent = Node::readFile(node.parent, *this);
 						parent.left == path ? parent.left = node.right : parent.right = node.right;
 						parent.updateFile(node.parent);
 					}
-				
+					// fixes any violation of redblack tree properties
 					fixOrientation_Deletion(node.right, node.debt);
 					removeFile(path);
 					path = "NULL";
 
 				}
+				// left child
 				else if (node.right == "NULL") {
 					if (node.left != "NULL")
 					{
@@ -623,26 +648,32 @@ class RedBlackTree: public ParentTree<T> {
 						left.parent = node.parent;
 						left.updateFile(node.left);
 					}
+					// checking if node left or right to parent
 					if (node.parent != "NULL")
 					{
 						Node parent = Node::readFile(node.parent, *this);
 						parent.right == path ? parent.right = node.left : parent.left = node.left;
 						parent.updateFile(node.parent);
 					}
+					// fixes any violation of redblack tree properties
 					fixOrientation_Deletion(node.left, node.debt);
 					removeFile(path);
 					path = "NULL";
 				}
 			}
+			// has 2 children
 			else {
 				// both child exist
+				// in this case we used successor approach
 				if (node.left != "NULL" && node.right != "NULL") {
 					Node successor = Node::readFile(node.left, *this);
 					filesystem::path successorPath = node.left;
+					// finds the successor
 					while (successor.right != "NULL") {
 						successorPath = successor.right;
 						successor = Node::readFile(successor.right, *this);
 					}
+					// changes node with successor
 					node.data = successor.data;
 					node.frequency = successor.frequency;
 					node.rowIndexes = successor.rowIndexes;
@@ -651,16 +682,20 @@ class RedBlackTree: public ParentTree<T> {
 					filesystem::path updatedPath = createPath(successor.data);
 					successor.frequency = 1;
 					successor.updateFile(successorPath);
+					// removes the successor
 					removeNode(node.left, successor.data, rowIndex);
 
 					node = Node::readFile(path, *this);
+					// updates file names
 					filesystem::rename(path, updatedPath);
+					// updates the parent
 					if (node.parent != "NULL")
 					{
 						Node parent = Node::readFile(node.parent, *this);
 						parent.left == path ? parent.left = updatedPath : parent.right = updatedPath;
 						parent.updateFile(node.parent);
 					}
+					// updates the children
 					if (node.left != "NULL")
 					{
 						Node left = Node::readFile(node.left, *this);
@@ -673,11 +708,13 @@ class RedBlackTree: public ParentTree<T> {
 						right.parent = updatedPath;
 						right.updateFile(node.right);
 					}
+					// updates the current path 
 					path = updatedPath;
 				}
 			}
 		}
 	}
+	// Print the tree
 	void inorderPrint(const filesystem::path& path, int depth = 0)
 	{
 		if (path.empty() || path == "NULL")
@@ -698,14 +735,15 @@ class RedBlackTree: public ParentTree<T> {
 		cout << node.data <<"("<<node.color<<" , "<<node.frequency<<")"<<endl;
 		inorderPrint(node.left, depth + 1);
 	}
-
+	// Search for a value in the tree
 	Node helperSearch(const filesystem::path& root, const T& value) {
 		if (root == "NULL") {
-			return Node();
+			return Node(); // tree empty Return an empty node
 		}
 
 		Node currentNode = Node::readFile(root, *this);
-
+		// using recursion to search for the value and return the node
+		// using the balanced search tree property
 		if (value < currentNode.data) {
 			return helperSearch(currentNode.left, value);
 		}
@@ -713,27 +751,31 @@ class RedBlackTree: public ParentTree<T> {
 			return helperSearch(currentNode.right, value);
 		}
 		else {
-			return currentNode;
+			return currentNode; // return the node
 		}
 	}
 public:
+	// Paths
 	filesystem::path Root()const { return rootPath; }
 	RedBlackTree()
 	{}
+	// Constructor
 	RedBlackTree(filesystem::path branchPath)
 	{
+		// Set the paths
 		this->branchPath = branchPath;
 		this->folderPath = branchPath;
-		this->rootPath = "NULL";
-		this->folderPath /= "TREE";
+		this->rootPath = "NULL"; // Set the root path to NULL
+		this->folderPath /= "TREE"; // Append the TREE folder
 		if (!filesystem::exists(this->folderPath))
 		{
+			// Create the directories
 			filesystem::create_directories(this->folderPath);
 			filesystem::path nodesPath = this->folderPath / "NODES";
 			filesystem::create_directories(nodesPath);
 		}
 	}
-
+	// Load the tree from a branch constructor
 	RedBlackTree(bool loadTreeFromBranch, filesystem::path branchPath)
 	{
 		if (loadTreeFromBranch)
@@ -742,33 +784,38 @@ public:
 		}
 	}
 	//===================================== UI Functions ==========================================
+	
+	// Insert a value into the tree
 	void insert(const T& value, const long long& rowIndex) {
 		insertNode(this->rootPath, value, rowIndex);
 	}
 	
+	// Remove a value from the tree
 	void remove(const T& value, const long long& rowIndex) {
 		if (rootPath == "NULL") {
 			throw runtime_error("Tree is Empty.");
 		}
-		removeNode(this->rootPath, value, rowIndex);
+		removeNode(this->rootPath, value, rowIndex); // Remove the node
 	}
+	// Print the tree
 	void print() {
-		inorderPrint(rootPath);
+		inorderPrint(rootPath); 
 	}
+	// Search for a value in the tree
 	Vector<long long>search(const T& data)
 	{
-		Node node = this->helperSearch(this->rootPath, data);
+		Node node = this->helperSearch(this->rootPath, data); // Search for the node
 		if (node.rowIndexes.getCurr() == 0)
 		{
 			cout << "No instances of key: " << data << " exist." << endl;
-			return Vector<long long>();
+			return Vector<long long>(); // Return an empty vector
 		}
 		else
 		{
-			return node.rowIndexes;
+			return node.rowIndexes; // Return the row indexes
 		}
 	}
-
+	// Save data to file
 	void saveDataToFile()
 	{
 		ofstream file;
@@ -792,10 +839,10 @@ public:
 		ifstream file(branchPath);
 		if (!file.is_open())
 			throw runtime_error("Cannot open file: \'RB_DATA.txt\' for reading.");
-		file >> rootPath;
-		file >> folderPath;
-		file >> this->branchPath;
-		file.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+		file >> rootPath; // Read the root path
+		file >> folderPath; // Read the folder path
+		file >> this->branchPath; // Read the branch path
+		file.ignore(std::numeric_limits<std::streamsize>::max(), '\n'); // Ignore the newline character
 		file.close();
 	}
 

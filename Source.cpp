@@ -11,16 +11,13 @@ int main()
 	//	cout << key << endl;
 	//	tree1.insert(key,0);
 	//}
+	//tree1.remove(25,0);
+	//tree1.remove(40,0);
+	//// tree1.remove(35,0);
 	//tree1.printTree(tree1.getRoot());
 	//tree1.search(25);
 
-	//// Test Deletion
-	//tree1.remove(25);
-	//tree1.remove(40);
-	//tree1.remove(35);
-	//tree1.remove(70);
-	//tree1.remove(80);
-	//tree1.printTree(tree1.getRoot());
+	////// Test Deletion
 	GitLite git;
 	String input;
 	while (true)
