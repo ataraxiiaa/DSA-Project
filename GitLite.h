@@ -230,7 +230,6 @@ public:
 					break;
 
 				rowIndex = currentMerkle->getCounter();
-				cout << rowIndex << '\n';
 				RowEntry rowData;
 				rowData.readRow(rowIndex, rowString);
 				currentMerkle->insert(rowData);					//insert with index in merkle

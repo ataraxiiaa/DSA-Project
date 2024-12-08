@@ -2,6 +2,8 @@
 #include<iostream>
 #include "String.h"
 #include "RowEntry.h"
+//#include<openssl/sha.h>
+#include<sstream>	//for hashing
 #include <fstream>
 #include<filesystem>
 using namespace std;
@@ -59,6 +61,20 @@ private:
 				resString += (secondChar + '0');
 				return resString;
 			}
+			//sha-256
+			//else if (::hashTypeGlobal == 2)
+			//{
+			//	unsigned char hash[SHA256_DIGEST_LENGTH];
+			//	SHA256((unsigned char*)input.getData(), input.getSize(), hash);
+
+			//	// Convert hash to hexadecimal String
+			//	std::ostringstream oss;
+			//	for (int i = 0; i < SHA256_DIGEST_LENGTH; i++) {
+			//		oss << std::hex << std::setw(2) << std::setfill('0') << (int)hash[i];
+			//	}
+			//	resString = oss.str().c_str(); 
+			//	return resString;
+			//}
 		}
 
 		void updateHash(const filesystem::path& leftPath, const filesystem::path& rightPath, const MerkleTree& merc)

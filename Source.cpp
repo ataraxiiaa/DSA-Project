@@ -1,3 +1,8 @@
+///*
+//	Fahad Bin Faisal, 23i-0614, Section G
+//	Ali Abdullah, 23i-0842, Section G
+//	Ahmar Ali, 23p-0686, Section G
+//*/
 #include "GitLite.h"
 using namespace std;
 
