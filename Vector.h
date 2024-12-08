@@ -68,6 +68,56 @@ public:
 			throw runtime_error("Accessing invalid index.");
 	} // Accessing address the pointer is pointing to 
 
+	void insertSorted(Type val) {
+		bool inBetween = false;
+		int index = 0;
+		for (int i = 0; i < currSize; i++) {
+			if (ptr[i] > val) {
+				inBetween = true;
+				index = i;
+				break;
+			}
+		}
+		if (inBetween) inserAt(val, index);
+		else push_back(val);
+	}
+	void inserAt(const Type& data, int index) {
+		if ((index > (currSize + 1)) || (index < 0)) {
+			return;
+		}
+		if (currSize == maxSize - 1) {
+			Type* temp = new Type[2 * maxSize];
+			for (int i = 0; i < currSize; ++i) {
+				temp[i] = ptr[i];
+			}
+			delete[] ptr;
+			ptr = temp;
+			maxSize *= 2;
+		}
+		currSize++;
+		int i;
+		for (i = currSize; i > index; i--) {
+			ptr[i] = ptr[i - 1];
+		}
+		ptr[i] = data;
+	}
+	int search(const Type& value) const {
+		for (int i = 0; i < currSize; ++i) {
+			if (this->ptr[i] == value) {
+				return i;
+			}
+		}
+		return -1;
+	}
+	void removeAt(int index) {
+		if (index < 0 || index >= currSize) {
+			return;
+		}
+		for (int i = index; i < currSize - 1; i++) {
+			ptr[i] = ptr[i + 1];
+		}
+		currSize--;
+	}
 	void Destroy(int index) {
 		if (index == currSize - 1) {
 			currSize--;

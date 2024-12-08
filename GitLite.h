@@ -5,6 +5,7 @@
 #include "ParentTree.h"
 #include"AVL.h"
 #include"RedBlackTree.h"
+#include "Btree.h"
 #include"MerkleTree.h"
 #include "RowEntry.h"
 using namespace std;
@@ -210,7 +211,15 @@ public:
 			}
 			else if (treeType == 3)//BTree
 			{
-
+				cout << "Choose Degree for B-Tree: ";
+				int degree;
+				cin >> degree;
+				while (degree <= 1)
+				{
+					cout << "Enter degree >=2: ";
+					cin >> degree;
+				}
+				this->currentTree = new Btree<String>(currentBranch, degree);
 			}
 			String rowString;
 			long long rowIndex;
@@ -324,7 +333,7 @@ public:
 				}
 				else if (treeType == 3)//BTree
 				{
-
+					currentTree = new Btree<String>(true, currentBranch);
 				}
 				saveRepoToFile();
 				return;
@@ -610,7 +619,7 @@ public:
 		}
 		else if (treeType == 3)//BTree
 		{
-
+			currentTree = new Btree<String>(true, currentBranch);
 		}
 
 
