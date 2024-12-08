@@ -28,13 +28,14 @@ class RedBlackTree: public ParentTree<T> {
 	struct Node {
 		T data;
 		String hash;
-		filesystem::path left;
-		filesystem::path right;
-		filesystem::path parent;
-		NodeColor color;
-		bool debt;
-		int frequency;
-		Vector<long long> rowIndexes;
+		filesystem::path left; // Left child
+		filesystem::path right; // Right child
+		filesystem::path parent; // Parent
+		NodeColor color; // Color of the node
+		bool debt; // Debt of the node if a double black node occurs
+		int frequency; // Frequency of the node
+		Vector<long long> rowIndexes; // Row indexes of the node
+		// Constructor
 		Node(T data = T()) {
 			this->data = data;
 			color = RED;
@@ -45,6 +46,8 @@ class RedBlackTree: public ParentTree<T> {
 			right = "NULL";
 			parent = "NULL";
 		}
+		// functions required for file handling
+		// saves the node to the file
 		void updateFile(const filesystem::path& path) {
 			if (path == "NULL") {
 				throw runtime_error("Unable to find path");
@@ -66,12 +69,16 @@ class RedBlackTree: public ParentTree<T> {
 			file << '\n';
 			file << this->color << '\n';
 			file << this->hash << '\n';
+			/*
+			The left, right and parent paths are stored as relative paths 
+			*/
 			file << (this->left == "NULL" ? "NULL" : makeRelative(this->left)) << '\n';
 			file << (this->right == "NULL" ? "NULL" : makeRelative(this->right)) << '\n';
 			file << (this->parent == "NULL" ? "NULL" : makeRelative(this->parent)) << '\n';
 			file << this->debt << '\n';
 			file.close();
 		}
+		// reads the node from the file
 		static Node readFile(const filesystem::path& path, const RedBlackTree& merc) {
 			if (path == "NULL") {
 				throw runtime_error("Accessing NULL path");
@@ -108,6 +115,7 @@ class RedBlackTree: public ParentTree<T> {
 			getline(file, node.hash);
 			filesystem::path temp;
 
+			// the merc.branchPath allows us to get the relative path
 			file >> temp;
 			if (temp == "NULL")
 				node.left = "NULL";
@@ -142,6 +150,7 @@ class RedBlackTree: public ParentTree<T> {
 		}
 	};
 	//===================================== File Functions ==========================================
+	// helper function to create file path dependent on value
 	filesystem::path createPath(const T& value) {
 
 		// Construct the file path
@@ -157,6 +166,7 @@ class RedBlackTree: public ParentTree<T> {
 		filePath += ".txt";
 		return filePath;
 	}
+	// helper function to remove file
 	bool removeFile(filesystem::path& path) {
 		if (filesystem::exists(path)) {
 			filesystem::remove(path);
@@ -165,14 +175,15 @@ class RedBlackTree: public ParentTree<T> {
 		return false;
 
 	}
-	//===================================== Node Functions ==========================================
 	//===================================== Encapsulated Functions ==========================================
+	// function to rotate the tree to the right
 	void rotateRight(filesystem::path& path) {
 		Node node = Node::readFile(path, *this);
 
 		if (node.left == "NULL") {
 			throw runtime_error("Cannot perform right rotation on a node with no left child.");
 		}
+		// i forgot how it worked but the rotation is same as AVL so figure it out yourself idc
 		Node leftNode = Node::readFile(node.left, *this);
 		filesystem::path leftPath = node.left;        
 		filesystem::path grandRightPath = leftNode.right; 
@@ -208,10 +219,11 @@ class RedBlackTree: public ParentTree<T> {
 		leftNode.updateFile(leftPath); 
 		// path = leftPath;
 	}
+	// function to rotate the tree to the left
 	void rotateLeft(filesystem::path& path) {
 		Node node = Node::readFile(path, *this);
 		Node rightNode = Node::readFile(node.right, *this);
-
+		// i forgot how it worked but the rotation is same as AVL so figure it out yourself idc
 		filesystem::path rightPath = node.right; 
 		filesystem::path grandLeftChildPath = rightNode.left; 
 		node.right = grandLeftChildPath;
@@ -245,7 +257,7 @@ class RedBlackTree: public ParentTree<T> {
 		rightNode.updateFile(rightPath);
 		// path = rightPath;
 	}
-
+	// function to fix the orientation of the tree after insertion and fix any violations of redblack tree
 	void fixOrientation_Insertion(filesystem::path& path) {
 		if (path == "NULL") return;
 		if (path == rootPath) {
@@ -276,12 +288,13 @@ class RedBlackTree: public ParentTree<T> {
 				}
 				uncle.updateFile(unclePath);
 				parent.updateFile(Parentpath);
+				// recursively fix the orientation
 				fixOrientation_Insertion(grandParentPath);
 			}
 			else {
 				bool isleftChild = (grandParent.left == Parentpath);
 				bool isNodeLeftChild = (parent.left == path);
-
+				// 4 cases of rotation
 				if (isleftChild && isNodeLeftChild) { // LL
 					rotateRight(grandParentPath);
 				}
@@ -289,17 +302,19 @@ class RedBlackTree: public ParentTree<T> {
 					rotateLeft(grandParentPath);
 				}
 				else if (isleftChild && !isNodeLeftChild) { // LR
-					rotateLeft(Parentpath);
+					rotateLeft(Parentpath); // rotate left and then rotate right
 					rotateRight(grandParentPath);
 				}
 				else if (!isleftChild && isNodeLeftChild) { // Rl
-					rotateRight(Parentpath);
+					rotateRight(Parentpath); // rotate right and then rotate left
 					rotateLeft(grandParentPath);
 				}
 			}
 		}
 	}
+	// function to insert a node into the tree
 	void insertNode(filesystem::path& path, const T& data, const long long& rowIndex) {
+		// if the path is null then create a new node
 		if (path == "NULL") {
 			filesystem::path newPath = createPath(data);
 			Node newNode(data);
@@ -311,6 +326,7 @@ class RedBlackTree: public ParentTree<T> {
 			return;
 		}
 		else {
+			// read the node
 			Node curr = Node::readFile(path, *this);
 			if (data == curr.data) {
 				curr.frequency++;
@@ -318,6 +334,7 @@ class RedBlackTree: public ParentTree<T> {
 				curr.updateFile(path);
 				return;
 			}
+			// if the data is less than the current node data
 			else if (data < curr.data) {
 				if (curr.left == "NULL") {
 					filesystem::path newPath = createPath(data);
@@ -331,9 +348,11 @@ class RedBlackTree: public ParentTree<T> {
 					return;
 				}
 				else {
+					// recursively insert the node
 					insertNode(curr.left, data, rowIndex);
 				}
 			}
+			// if the data is greater than the current node data
 			else if (data > curr.data) {
 				if (curr.right == "NULL") {
 					filesystem::path newPath = createPath(data);
@@ -379,14 +398,14 @@ class RedBlackTree: public ParentTree<T> {
 
 				parent.updateFile(parentPath);
 				sibling.updateFile(siblingPath);
-
+				// perform rotations according to where node is currently at
 				if (sibling.data > parent.data) {
 					rotateLeft(parentPath);
 				}
 				else {
 					rotateRight(parentPath);
 				}
-
+				// recursively fix the debt
 				fixDebt(path);
 			}
 
