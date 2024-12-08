@@ -181,7 +181,7 @@ class Btree : public ParentTree<T>
                 if (value == currNode.keys[a].key) {
                     currIndex = a;
 					currKeyIndex = a;
-					break;
+					return Pair<filesystem::path, int, int>(currPath, -1, currKeyIndex);
                 }
                 if (value < currNode.keys[a].key) {
                     currIndex = a;
@@ -334,35 +334,21 @@ class Btree : public ParentTree<T>
             Node node = Node::LoadFromFile(currPath,*this);
 
 			// If the key already exists, update the index
-			int low = 0, high = node.keys.getCurr() - 1;
-			bool keyExists = false;
-            while (low <= high) {
-				int mid = low + (high - low) / 2;
-				if (node.keys[mid].key == value) {
-					node.keys[mid].indexes.push_back(rowIndex);
-					node.saveToFile(currPath);
-					keyExists = true;
-					break;
-				}
-				else if (node.keys[mid].key < value) {
-					low = mid + 1;
-				}
-				else {
-					high = mid - 1;
-				}
+            if (toBeInserted.second == -1) {
+				node.keys[toBeInserted.third].indexes.push_back(rowIndex);
+                node.saveToFile(currPath);
+                return;
             }
             // Insert the new key
-            if (!keyExists) {
-                Key newKey;
-                newKey.key = value;
-				newKey.indexes.push_back(rowIndex);
-                node.keys.insertSorted(newKey);
-                node.saveToFile(currPath);
+            Key newKey;
+            newKey.key = value;
+			newKey.indexes.push_back(rowIndex);
+            node.keys.insertSorted(newKey);
+            node.saveToFile(currPath);
 
-                // Split the node if it exceeds the degree
-                if (node.keys.getCurr() >= degree) {
-                    splitNodes(node, currPath);
-                }
+            // Split the node if it exceeds the degree
+            if (node.keys.getCurr() >= degree) {
+                splitNodes(node, currPath);
             }
         }
     }

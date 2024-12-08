@@ -3,16 +3,16 @@ using namespace std;
 
 int main()
 {
-	/*Btree<int> tree1("C:\\Users\\HP\\source\\repos\\ataraxiiaa\\DSA-Project\\Btree", 3);
+	//Btree<int> tree1("C:\\Users\\HP\\source\\repos\\ataraxiiaa\\DSA-Project\\Btree", 3);
 
 
-	vector<int> keys = { 50, 20, 70, 10, 30, 60, 90, 40, 80, 100, 25, 35, 75, 85, 95 };
-	for (int key : keys) {
-		cout << key << endl;
-		tree1.insert(key,0);
-	}
-	tree1.printTree(tree1.getRoot());
-	tree1.search(25);*/
+	//vector<int> keys = { 50, 20, 70, 10, 30, 60, 90, 40, 80, 100, 25, 35, 75, 85, 95 ,100,105,110,125,130,135,140,145,50};
+	//for (int key : keys) {
+	//	cout << key << endl;
+	//	tree1.insert(key,0);
+	//}
+	//tree1.printTree(tree1.getRoot());
+	//tree1.search(25);
 
 	//// Test Deletion
 	//tree1.remove(25);
