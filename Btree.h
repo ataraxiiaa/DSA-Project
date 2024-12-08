@@ -657,6 +657,12 @@ public:
         }
         nodeCount = 0; // used to name the text files
     }
+    // load constructor
+	Btree(bool loadTreeFromBranch, filesystem::path branchPath) {
+		if (loadTreeFromBranch) {
+			loadFromBranch(branchPath);
+		}
+	}
     filesystem::path getRoot() {
         return rootPath;
     }
@@ -709,6 +715,7 @@ public:
 		file << rootPath << '\n'; // save root path
 		file << folderPath << '\n'; // save folder path
 		file << branchPath << '\n'; // save branch path
+        file << this->degree << '\n'; // save degree
         file.close();
     }
 
@@ -729,6 +736,7 @@ public:
         file >> rootPath;
         file >> folderPath;
         file >> this->branchPath;
+        file >> this->degree;
         file.close();
     }
 

@@ -248,7 +248,7 @@ public:
 				}
 				else if (treeType == 3)//BTree
 				{
-
+					currentTree = new Btree<String>(true, currentBranch);
 				}
 				saveRepoToFile();
 				return;
@@ -359,7 +359,7 @@ public:
 		}
 		else if (treeType == 3)//BTree
 		{
-
+			currentTree = new Btree<String>(true, currentBranch);
 		}
 
 
