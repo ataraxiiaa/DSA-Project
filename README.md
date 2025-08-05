@@ -59,9 +59,37 @@ GITLite offers a hands-on demonstration of how version control systems operate i
 - **Command:** `current-branch`
 - Shows the active working branch.
 
-### ✅ Save/Load Repository
-- **Command:** `save` / `load <file_name>`
-- Save and restore full repository state from file.
+### ✅ Save Repository
+- **Command:** `save`
+- Saves the current repository state to a file.
+
+### ✅ Load Repository
+- **Command:** `load <file_name>`
+- Loads repository state from a specified file.
+
+### ✅ Insert Entry
+- **Command:** `insert`
+- Adds a new row/entry into the dataset.
+
+### ✅ Search Entry
+- **Command:** `search`
+- Searches for entries in the dataset.
+
+### ✅ Remove Entry
+- **Command:** `remove`
+- Removes an entry from the dataset.
+
+### ✅ Update Entry
+- **Command:** `update`
+- Updates an existing entry in the dataset.
+
+### ✅ Print Current Tree
+- **Command:** `print`
+- Prints the current tree structure.
+
+### ✅ Print Merkle Tree
+- **Command:** `print-merc`
+- Prints the current Merkle tree for integrity verification.
 
 ---
 
