@@ -98,6 +98,33 @@ int main()
 		{
 			break;
 		}
+		else if (input == "help")
+		{
+			cout << "Commands:\n";
+			cout << "init - Initialize a new repository.\n";
+			cout << "print - Print the current tree.\n";
+			cout << "print-merc - Print the mercurial tree.\n";
+			cout << "current-branch - Print the current branch name.\n";
+			cout << "branches - Print all branches.\n";
+			cout << "create-branch - Create a new branch.\n";
+			cout << "checkout - Checkout to a branch.\n";
+			cout << "delete-branch - Delete a branch.\n";
+			cout << "save - Save the repository data to a file.\n";
+			cout << "load - Load the repository data from a file.\n";
+			cout << "insert - Insert a new key into the current tree.\n";
+			cout << "search - Search for a key in the current tree.\n";
+			cout << "remove - Remove a key from the current tree.\n";
+			cout << "update - Update a key in the current tree.\n";
+			cout << "commit - Commit changes to the current branch.\n";
+			cout << "log - Show commit history of the current branch.\n";
+			cout << "merge - Merge another branch into the current branch.\n";
+			cout << "exit - Exit the program.\n";
+			cout << "help - Show this help message.\n";
+		}
+		else if (input == "clear")
+		{
+			system("cls");
+		}
 		else
 		{
 			cout << "Invalid command.\n";

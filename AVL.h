@@ -51,9 +51,9 @@ private:
 			}
 			file << '\n';
 			file << this->hash << '\n';
-			file << (this->left == "NULL" ? "NULL" : makeRelative(this->left)) << '\n';
-			file << (this->right == "NULL" ? "NULL" : makeRelative(this->right)) << '\n';
-			file << (this->parent == "NULL" ? "NULL" : makeRelative(this->parent)) << '\n';
+			file << (this->left == "NULL" ? "NULL" : ParentTree<T>::makeRelative(this->left)) << '\n';
+			file << (this->right == "NULL" ? "NULL" : ParentTree<T>::makeRelative(this->right)) << '\n';
+			file << (this->parent == "NULL" ? "NULL" : ParentTree<T>::makeRelative(this->parent)) << '\n';
 
 			file.close();
 		}
@@ -135,7 +135,7 @@ private:
 	filesystem::path generateFilePath(const T& value)
 	{
 		// Construct the file path
-		filesystem::path filePath = folderPath / "NODES";
+		filesystem::path filePath = this->folderPath / "NODES";
 		if constexpr (is_same<T, String>::value)
 		{
 			filePath /= value.getData();
@@ -592,31 +592,31 @@ public:
 	
 	void insert(const T& data, const long long& rowIndex) override
 	{
-		helperInsert(rootPath,"NULL", data, rowIndex);
+		helperInsert(this->rootPath,"NULL", data, rowIndex);
 	}
 	void remove(const T& data, const long long& rowIndex) override
 	{
-		helperRemove(rootPath, data, rowIndex);
+		helperRemove(this->rootPath, data, rowIndex);
 	}
 
 	void print() override
 	{
 		cout << "---------------------------------------------------- "<<endl;
-		inorderPrint(rootPath);
+		inorderPrint(this->rootPath);
 	}
 
 	//saves path of root into a file
 	void saveDataToFile()
 	{
 		ofstream file;
-		filesystem::path path = folderPath;
+		filesystem::path path = this->folderPath;
 		path += "\\TREE_DATA.txt";
 		file.open(path);
 		if (!file.is_open())
 			throw runtime_error("Cannot open file: \'AVL_DATA.txt\' for writing.");
-		file << rootPath << '\n';
-		file << folderPath << '\n';
-		file << branchPath << '\n';
+		file << this->rootPath << '\n';
+		file << this->folderPath << '\n';
+		file << this->branchPath << '\n';
 		file.close();
 	}
 	void loadFromBranch(filesystem::path branchPath)
@@ -628,8 +628,8 @@ public:
 		ifstream file(branchPath);
 		if (!file.is_open())
 			throw runtime_error("Cannot open file: \'AVL_DATA.txt\' for reading.");
-		file >> rootPath;
-		file >> folderPath;
+		file >> this->rootPath;
+		file >> this->folderPath;
 		file >> this->branchPath;
 		file.close();
 	}

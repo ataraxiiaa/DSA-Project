@@ -88,12 +88,12 @@ class Btree : public ParentTree<T>
 
             // save parent
             // MakeRelative function allows the code to be independent of the file path
-            file << (this->parent == "NULL" ? "NULL" : makeRelative(this->parent)) << '\n';
+            file << (this->parent == "NULL" ? "NULL" : ParentTree<T>::makeRelative(this->parent)) << '\n';
 
             // save children count and paths
             file << childrenPaths.getCurr() << '\n';
             for (int i = 0; i < childrenPaths.getCurr(); ++i) {
-                file << makeRelative(childrenPaths[i]) << '\n';
+                file << ParentTree<T>::makeRelative(childrenPaths[i]) << '\n';
             }
             file.close();
         }
@@ -165,11 +165,11 @@ class Btree : public ParentTree<T>
 
     // function to search for a key in the tree
     Pair<filesystem::path, int, int> searchNode(const T& value) {
-        if (rootPath == "NULL") {
+        if (this->rootPath == "NULL") {
             return Pair<filesystem::path, int, int>();
         }
 
-        filesystem::path currPath = rootPath;
+        filesystem::path currPath = this->rootPath;
         int currIndex = 0;
         int currKeyIndex = -1;
         Node currNode = Node::LoadFromFile(currPath, *this);
@@ -208,9 +208,9 @@ class Btree : public ParentTree<T>
         Key shiftedKey = node.keys[mid];
         Node leftNode, rightNode;
         // paths for the new nodes
-        filesystem::path leftNodePath = folderPath / "NODES" / ("DISK_" + to_string(nodeCount) + ".txt");
+        filesystem::path leftNodePath = this->folderPath / "NODES" / ("DISK_" + to_string(nodeCount) + ".txt");
         nodeCount++;
-        filesystem::path rightNodePath = folderPath / "NODES" / ("DISK_" + to_string(nodeCount) + ".txt");
+        filesystem::path rightNodePath = this->folderPath / "NODES" / ("DISK_" + to_string(nodeCount) + ".txt");
         nodeCount++;
         // seperating keys
         for (int i = 0; i < mid; ++i) {
@@ -244,11 +244,11 @@ class Btree : public ParentTree<T>
             node.childrenPaths.clear();
         }
         // if the node is root
-        if (currPath == rootPath || (!node.isLeaf && node.parent == "NULL")) {
+        if (currPath == this->rootPath || (!node.isLeaf && node.parent == "NULL")) {
             // create a new root
             Node newRoot;
             newRoot.isLeaf = false;
-            filesystem::path newRootPath = folderPath / "NODES" / "ROOT.txt";
+            filesystem::path newRootPath = this->folderPath / "NODES" / "ROOT.txt";
 
             // update children
             if (exists(newRootPath)) {
@@ -271,7 +271,7 @@ class Btree : public ParentTree<T>
             newRoot.saveToFile(newRootPath);
 
             // update the root path
-            rootPath = newRootPath;
+            this->rootPath = newRootPath;
         }
         // if the node is not root
         else {
@@ -312,7 +312,7 @@ class Btree : public ParentTree<T>
     void insertNode(filesystem::path& root, const T& value, const long long& rowIndex) {
         if (root == "NULL") {
             //initialize the  folder
-            path rootPath = folderPath / "NODES" / "ROOT.txt";
+            path rootPath = this->folderPath / "NODES" / "ROOT.txt";
 
             Node newNode;
             Key newKey;
@@ -458,8 +458,8 @@ class Btree : public ParentTree<T>
                 if (parentNode.childrenPaths.getCurr() == 1) {
                     // filesystem::remove(root);
                     Node newRoot = Node::LoadFromFile(parentNode.childrenPaths[0], *this);
-                    this->rootPath = folderPath / "ROOT.txt";
-                    newRoot.saveToFile(rootPath);
+                    this->rootPath = this->folderPath / "ROOT.txt";
+                    newRoot.saveToFile(this->rootPath);
                     filesystem::remove(parentNode.childrenPaths[0]);
                 }
             }
@@ -549,9 +549,9 @@ class Btree : public ParentTree<T>
                     removeInternal(node.parent, parentNode, parentIndex);
                 }
                 else if (node.keys.getCurr() == 0) {
-                    rootPath = node.childrenPaths[index - 1];
+                    this->rootPath = node.childrenPaths[index - 1];
                     leftSibling.parent = "NULL";
-                    leftSibling.saveToFile(rootPath);
+                    leftSibling.saveToFile(this->rootPath);
                     filesystem::remove(path);
                 }
             }
@@ -560,11 +560,11 @@ class Btree : public ParentTree<T>
     // helper function to search Node for deletion
     Pair<filesystem::path, int, int> searchNode_Deletion(const T& value) {
         // if the tree is empty
-        if (rootPath == "NULL") {
+        if (this->rootPath == "NULL") {
             return Pair<filesystem::path, int, int>("NULL", -1, -1);
         }
         // search for the node that contains the key
-        filesystem::path currPath = rootPath;
+        filesystem::path currPath = this->rootPath;
         int childIndexInParent = -1;
         int keyIndexInNode = -1;
         // loop until the leaf node is reached
@@ -664,24 +664,24 @@ public:
         }
     }
     filesystem::path getRoot() {
-        return rootPath;
+        return this->rootPath;
     }
     // insert declared in parent tree class but implemented here
     // insert a key into the tree
     void insert(const T& data, const long long& rowIndex) override
     {
-        insertNode(rootPath, data, rowIndex);
+        insertNode(this->rootPath, data, rowIndex);
     }
     // remove declared in parent tree class but implemented here
     // remove a key from the tree
     void remove(const T& data, const long long& rowIndex) override
     {
-        removeNode(rootPath, data);
+        removeNode(this->rootPath, data);
     }
     // function to print the tree
     void print() override
     {
-        printTree(rootPath);
+        printTree(this->rootPath);
     }
     // helper function to print the tree
     void printTree(filesystem::path root, int depth = 0)
@@ -707,14 +707,14 @@ public:
     void saveDataToFile()
     {
         ofstream file;
-        filesystem::path path = folderPath;
+        filesystem::path path = this->folderPath;
         path += "\\TREE_DATA.txt";
         file.open(path);
         if (!file.is_open())
             throw runtime_error("Cannot open file: \'B-TREE_DATA.txt\' for writing.");
-        file << rootPath << '\n'; // save root path
-        file << folderPath << '\n'; // save folder path
-        file << branchPath << '\n'; // save branch path
+        file << this->rootPath << '\n'; // save root path
+        file << this->folderPath << '\n'; // save folder path
+        file << this->branchPath << '\n'; // save branch path
         file << this->degree << '\n'; // save degree
         file.close();
     }
@@ -733,8 +733,8 @@ public:
         if (!file.is_open())
             throw runtime_error("Cannot open file: \'AVL_DATA.txt\' for reading.");
         // file pathing and reading the data
-        file >> rootPath;
-        file >> folderPath;
+        file >> this->rootPath;
+        file >> this->folderPath;
         file >> this->branchPath;
         file >> this->degree;
         file.close();

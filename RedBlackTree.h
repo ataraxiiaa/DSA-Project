@@ -57,9 +57,9 @@ class RedBlackTree: public ParentTree<T> {
 			file << '\n';
 			file << this->color << '\n';
 			file << this->hash << '\n';
-			file << (this->left == "NULL" ? "NULL" : makeRelative(this->left)) << '\n';
-			file << (this->right == "NULL" ? "NULL" : makeRelative(this->right)) << '\n';
-			file << (this->parent == "NULL" ? "NULL" : makeRelative(this->parent)) << '\n';
+			file << (this->left == "NULL" ? "NULL" : ParentTree<T>::makeRelative(this->left)) << '\n';
+			file << (this->right == "NULL" ? "NULL" : ParentTree<T>::makeRelative(this->right)) << '\n';
+			file << (this->parent == "NULL" ? "NULL" : ParentTree<T>::makeRelative(this->parent)) << '\n';
 			file << this->debt << '\n';
 			file.close();
 		}
@@ -136,7 +136,7 @@ class RedBlackTree: public ParentTree<T> {
 	filesystem::path createPath(const T& value) {
 
 		// Construct the file path
-		filesystem::path filePath = folderPath / "NODES";
+		filesystem::path filePath = this->folderPath / "NODES";
 		if constexpr (is_same<T, String>::value)
 		{
 			filePath /= value.getData();
@@ -188,7 +188,7 @@ class RedBlackTree: public ParentTree<T> {
 			parentNode.updateFile(node.parent); 
 		}
 		else {
-			rootPath = leftPath;
+			this->rootPath = leftPath;
 		}
 
 		leftNode.right = path;
@@ -225,7 +225,7 @@ class RedBlackTree: public ParentTree<T> {
 			parentNode.updateFile(node.parent); 
 		}
 		else {
-			rootPath = rightPath;
+			this->rootPath = rightPath;
 		}
 
 		rightNode.left = path;
@@ -239,7 +239,7 @@ class RedBlackTree: public ParentTree<T> {
 
 	void fixOrientation_Insertion(filesystem::path& path) {
 		if (path == "NULL") return;
-		if (path == rootPath) {
+		if (path == this->rootPath) {
 			Node node = Node::readFile(path, *this);
 			node.color = BLACK;
 			node.updateFile(path);
@@ -261,7 +261,7 @@ class RedBlackTree: public ParentTree<T> {
 			if (unclePath != "NULL" && uncle.color == RED) {
 				uncle.color = BLACK;
 				parent.color = BLACK;
-				if (grandParentPath != rootPath) {
+				if (grandParentPath != this->rootPath) {
 					grandParent.color = RED;
 					grandParent.updateFile(grandParentPath);
 				}
@@ -354,7 +354,7 @@ class RedBlackTree: public ParentTree<T> {
 			node.updateFile(path);
 			return;
 		}
-		else if (path != rootPath) {
+		else if (path != this->rootPath) {
 			filesystem::path parentPath = node.parent;
 			parent = Node::readFile(parentPath, *this);
 
@@ -468,14 +468,14 @@ class RedBlackTree: public ParentTree<T> {
 						parent.color = BLACK;
 						parent.updateFile(parentPath);
 					}
-					else if (parent.color == BLACK && parentPath != rootPath)
+					else if (parent.color == BLACK && parentPath != this->rootPath)
 					{
 						fixDebt(parentPath);
 					}
 				}
 			}
 		}
-		if (path == rootPath) {
+		if (path == this->rootPath) {
 			node.color = BLACK;
 			node.updateFile(path);
 			return;
@@ -500,7 +500,7 @@ class RedBlackTree: public ParentTree<T> {
 			node.updateFile(path);
 			return;
 		}
-		else if(path != rootPath && hasDebt)
+		else if(path != this->rootPath && hasDebt)
 		{
 			fixDebt(path);
 		}
@@ -568,7 +568,7 @@ class RedBlackTree: public ParentTree<T> {
 				}
 				// No children
 				if (node.left == "NULL" && node.right == "NULL") {
-					if (path == rootPath) {
+					if (path == this->rootPath) {
 						path = "NULL";
 						return;
 					}
@@ -576,7 +576,7 @@ class RedBlackTree: public ParentTree<T> {
 					{
 						filesystem::path parentPath = node.parent;
 						Node parent = Node::readFile(parentPath, *this);
-						if (rootPath != "NULL") {
+						if (this->rootPath != "NULL") {
 							if (parent.left == path) {
 								parent.left = "NULL";
 							}
@@ -716,7 +716,7 @@ class RedBlackTree: public ParentTree<T> {
 		}
 	}
 public:
-	filesystem::path Root()const { return rootPath; }
+	filesystem::path Root()const { return this->rootPath; }
 	RedBlackTree()
 	{}
 	RedBlackTree(filesystem::path branchPath)
@@ -746,13 +746,13 @@ public:
 	}
 	
 	void remove(const T& value, const long long& rowIndex) {
-		if (rootPath == "NULL") {
+		if (this->rootPath == "NULL") {
 			throw runtime_error("Tree is Empty.");
 		}
 		removeNode(this->rootPath, value, rowIndex);
 	}
 	void print() {
-		inorderPrint(rootPath);
+		inorderPrint(this->rootPath);
 	}
 	Vector<long long>search(const T& data)
 	{
@@ -771,14 +771,14 @@ public:
 	void saveDataToFile()
 	{
 		ofstream file;
-		filesystem::path path = folderPath;
+		filesystem::path path = this->folderPath;
 		path += "\\TREE_DATA.txt";
 		file.open(path);
 		if (!file.is_open())
 			throw runtime_error("Cannot open file: \'RB_DATA.txt\' for writing.");
-		file << rootPath << '\n';
-		file << folderPath << '\n';
-		file << branchPath << '\n';
+		file << this->rootPath << '\n';
+		file << this->folderPath << '\n';
+		file << this->branchPath << '\n';
 		file.close();
 	}
 	void loadFromBranch(path branchPath)
@@ -790,8 +790,8 @@ public:
 		ifstream file(branchPath);
 		if (!file.is_open())
 			throw runtime_error("Cannot open file: \'RB_DATA.txt\' for reading.");
-		file >> rootPath;
-		file >> folderPath;
+		file >> this->rootPath;
+		file >> this->folderPath;
 		file >> this->branchPath;
 		file.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
 		file.close();
